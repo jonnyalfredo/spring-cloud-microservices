@@ -25,21 +25,28 @@
 		<spring-cloud.version>2023.0.1</spring-cloud.version>
 	</properties>
 
+	<!-- DEPENDÊNCIAS -->
 	<dependencies>
 
-		<!-- Spring Cloud Gateway (OFICIAL / WebFlux) -->
+		<!-- ✅ SPRING CLOUD GATEWAY (ESSENCIAL) -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-gateway</artifactId>
 		</dependency>
 
-		<!-- Eureka Client -->
+		<!-- ✅ EUREKA CLIENT -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
 
-		<!-- Actuator (vitrine / observabilidade) -->
+		<!-- (Opcional) LoadBalancer explícito -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-loadbalancer</artifactId>
+		</dependency>
+
+		<!-- Actuator -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
@@ -54,7 +61,7 @@
 
 	</dependencies>
 
-	<!-- BOM do Spring Cloud -->
+	<!-- BOM SPRING CLOUD -->
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
