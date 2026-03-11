@@ -1,0 +1,56 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: clientdb
+      POSTGRES_USER: clientuser
+      POSTGRES_PASSWORD: clientpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vitrine-network
+
+  service-registry:
+    build: ./service-registry
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+    networks:
+      - vitrine-network
+
+  client-api:
+    build: ./client-api
+    container_name: client-api
+    depends_on:
+      - postgres
+      - service-registry
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - vitrine-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - service-registry
+      - client-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - vitrine-network
+
+volumes:
+  postgres_data:
+
+networks:
+  vitrine-network:
+    driver: bridge
