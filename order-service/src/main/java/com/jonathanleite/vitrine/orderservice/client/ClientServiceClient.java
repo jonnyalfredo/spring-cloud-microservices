@@ -1,6 +1,7 @@
-package com.jonathanleite.vitrine.order_service.client;
+package com.jonathanleite.vitrine.orderservice.client;
 
-import com.jonathanleite.vitrine.order_service.dto.ClientResponseDTO;
+import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
