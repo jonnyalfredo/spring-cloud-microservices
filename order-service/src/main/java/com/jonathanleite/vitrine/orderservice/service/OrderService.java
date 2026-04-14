@@ -1,7 +1,7 @@
 package com.jonathanleite.vitrine.orderservice.service;
 
 import com.jonathanleite.vitrine.orderservice.entity.Order;
-import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
+import com.jonathanleite.vitrine.orderservice.enums.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
@@ -10,13 +10,17 @@ import com.jonathanleite.vitrine.orderservice.client.ClientServiceClient;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
 import com.jonathanleite.vitrine.orderservice.exception.ResourceNotFoundException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class OrderService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     private final OrderRepository orderRepository;
     private final ClientServiceClient clientServiceClient;
@@ -28,26 +32,22 @@ public class OrderService {
     }
 
     // =========================================================
-    // ✅ CRIAR PEDIDO (REGRA PRINCIPAL)
+    // ✅ CRIAR PEDIDO
     // =========================================================
     public OrderResponseDTO createOrder(OrderRequestDTO request) {
 
-        // 1. Validar dados básicos
+        log.info("Iniciando criação de pedido para clientId={}", request.getClientId());
+
+        // 1. Validação básica
         validateRequest(request);
 
-        // 2. Buscar cliente via Feign
-        ClientResponseDTO client = clientServiceClient.getClientById(request.getClientId());
+        // 2. Buscar cliente (Feign)
+        ClientResponseDTO client = getClient(request.getClientId());
 
         // 3. Validar cliente
-        if (client == null) {
-            throw new ResourceNotFoundException("Cliente não encontrado");
-        }
+        validateClient(client);
 
-        if (!client.isActive()) {
-            throw new BusinessException("Cliente está inativo");
-        }
-
-        // 4. Criar entidade
+        // 4. Criar pedido
         Order order = new Order(
                 request.getClientId(),
                 request.getDescription(),
@@ -55,10 +55,13 @@ public class OrderService {
                 OrderStatus.CREATED
         );
 
-        // 5. Persistir
         Order savedOrder = orderRepository.save(order);
 
-        // 6. Retornar DTO
+        log.info("Pedido criado com sucesso id={} clientId={} valor={}",
+                savedOrder.getId(),
+                savedOrder.getClientId(),
+                savedOrder.getAmount());
+
         return mapToResponse(savedOrder);
     }
 
@@ -67,41 +70,85 @@ public class OrderService {
     // =========================================================
     public OrderResponseDTO getOrderById(Long id) {
 
+        log.info("Buscando pedido id={}", id);
+
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado"));
+                .orElseThrow(() -> {
+                    log.error("Pedido não encontrado id={}", id);
+                    return new ResourceNotFoundException("Pedido não encontrado");
+                });
 
         return mapToResponse(order);
     }
 
     // =========================================================
-    // 📋 LISTAR TODOS
+    // 📋 LISTAR TODOS (COM PAGINAÇÃO)
     // =========================================================
-    public List<OrderResponseDTO> getAllOrders() {
-        return orderRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<OrderResponseDTO> getAllOrders(Pageable pageable) {
+
+        log.info("Listando pedidos page={} size={}",
+                pageable.getPageNumber(),
+                pageable.getPageSize());
+
+        return orderRepository.findAll(pageable)
+                .map(this::mapToResponse);
     }
 
     // =========================================================
     // 🔄 ATUALIZAR STATUS
     // =========================================================
-    public OrderResponseDTO updateStatus(Long id, OrderStatus status) {
+    public OrderResponseDTO updateStatus(Long id, OrderStatus newStatus) {
+
+        log.info("Atualizando status do pedido id={} para {}", id, newStatus);
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado"));
 
-        // Regra de negócio simples (pode evoluir depois)
-        order.setStatus(status);
+        // evita update desnecessário
+        if (order.getStatus() == newStatus) {
+            throw new BusinessException("Pedido já está com esse status");
+        }
+
+        validateStatusTransition(order.getStatus(), newStatus);
+
+        OrderStatus oldStatus = order.getStatus();
+
+        order.setStatus(newStatus);
 
         Order updatedOrder = orderRepository.save(order);
+
+        log.info("Status atualizado id={} de {} para {}",
+                id,
+                oldStatus,
+                newStatus);
 
         return mapToResponse(updatedOrder);
     }
 
     // =========================================================
-    // ⚠️ VALIDAÇÕES
+    // 🔥 MÉTODOS PRIVADOS (REGRAS)
     // =========================================================
+
+    private ClientResponseDTO getClient(Long clientId) {
+        try {
+            return clientServiceClient.getClientById(clientId);
+        } catch (Exception ex) {
+            log.error("Erro ao chamar client-api para clientId={}", clientId, ex);
+            throw new BusinessException("Erro ao validar cliente");
+        }
+    }
+
+    private void validateClient(ClientResponseDTO client) {
+
+        if (client == null) {
+            throw new ResourceNotFoundException("Cliente não encontrado");
+        }
+
+        if (!client.isActive()) {
+            throw new BusinessException("Cliente está inativo", "CLIENT_INACTIVE");
+        }
+    }
+
     private void validateRequest(OrderRequestDTO request) {
 
         if (request.getClientId() == null) {
@@ -112,8 +159,22 @@ public class OrderService {
             throw new BusinessException("Descrição é obrigatória");
         }
 
-        if (request.getAmount() == null || request.getAmount().doubleValue() <= 0) {
+        if (request.getAmount() == null || request.getAmount() <= 0) {
             throw new BusinessException("Valor deve ser maior que zero");
+        }
+    }
+
+    // REGRA DE TRANSIÇÃO DE STATUS
+    private void validateStatusTransition(OrderStatus current, OrderStatus next) {
+
+        if (current == OrderStatus.COMPLETED || current == OrderStatus.CANCELLED) {
+            log.warn("Tentativa inválida de alteração de pedido finalizado status={}", current);
+            throw new BusinessException("Pedido já finalizado não pode ser alterado");
+        }
+
+        if (current == OrderStatus.CREATED && next == OrderStatus.COMPLETED) {
+            log.warn("Transição inválida de {} para {}", current, next);
+            throw new BusinessException("Pedido deve passar por PROCESSING antes de COMPLETED");
         }
     }
 

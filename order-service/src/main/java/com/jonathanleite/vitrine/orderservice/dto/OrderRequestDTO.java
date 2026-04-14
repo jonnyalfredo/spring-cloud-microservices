@@ -5,15 +5,15 @@ import jakarta.validation.constraints.*;
 
 public class OrderRequestDTO {
 
-    @NotNull
+    @NotNull(message = "ClientId é obrigatório")
     private Long clientId;
 
-    @NotBlank
+    @NotBlank(message = "Descrição é obrigatória")
     private String description;
 
-    @NotNull
+    @NotNull(message = "Valor é obrigatório")
     @DecimalMin(value = "0.01", message = "O valor deve ser maior que zero")
-    private BigDecimal amount;
+    private Double amount;
 
     public OrderRequestDTO() {
     }

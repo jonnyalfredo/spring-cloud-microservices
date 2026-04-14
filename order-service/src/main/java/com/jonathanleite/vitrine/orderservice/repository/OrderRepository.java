@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+
 import jakarta.transaction.Transactional;
 
 @Repository
@@ -28,10 +29,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     Optional<Order> findByIdAndClientId(Long id, Long clientId);
 
     // =========================================================
-    // 📄 PAGINAÇÃO (IMPORTANTE PARA PRODUÇÃO)
+    // 📄 PAGINAÇÃO
     // =========================================================
-
-    Page<Order> findAll(Pageable pageable);
 
     Page<Order> findByClientId(Long clientId, Pageable pageable);
 
@@ -49,7 +48,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                                          @Param("amount") Double amount);
 
     // =========================================================
-    // ⚡ UPDATE DIRETO NO BANCO (PERFORMANCE)
+    // ⚡ UPDATE DIRETO (PERFORMANCE)
     // =========================================================
 
     @Modifying
@@ -59,17 +58,17 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                           @Param("status") OrderStatus status);
 
     // =========================================================
-    // 🧮 AGREGAÇÕES (RELATÓRIOS)
+    // 🧮 AGREGAÇÕES
     // =========================================================
 
-    @Query("SELECT SUM(o.amount) FROM Order o WHERE o.clientId = :clientId")
+    @Query("SELECT COALESCE(SUM(o.amount), 0) FROM Order o WHERE o.clientId = :clientId")
     Double sumAmountByClient(@Param("clientId") Long clientId);
 
     @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status")
     Long countByStatus(@Param("status") OrderStatus status);
 
     // =========================================================
-    // 🚀 EXISTS (OTIMIZAÇÃO)
+    // 🚀 EXISTS
     // =========================================================
 
     boolean existsByClientId(Long clientId);
