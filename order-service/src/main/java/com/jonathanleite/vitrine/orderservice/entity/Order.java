@@ -1,4 +1,4 @@
-package com.jonathanleite.vitrine.orderservice;
+package com.jonathanleite.vitrine.orderservice.entity;
 
 import jakarta.persistence.*;
 

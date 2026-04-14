@@ -1,7 +1,7 @@
 package com.jonathanleite.vitrine.orderservice.repository;
 
-import com.jonathanleite.vitrine.orderservice.Order;
-import com.jonathanleite.vitrine.orderservice.OrderStatus;
+import com.jonathanleite.vitrine.orderservice.entity.Order;
+import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

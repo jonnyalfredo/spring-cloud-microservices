@@ -1,6 +1,6 @@
 package com.jonathanleite.vitrine.orderservice.dto;
 
-import com.jonathanleite.vitrine.orderservice.OrderStatus;
+import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 
 import java.math.BigDecimal;
 

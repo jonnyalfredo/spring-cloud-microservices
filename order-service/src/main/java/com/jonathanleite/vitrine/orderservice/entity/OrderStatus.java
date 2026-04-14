@@ -1,4 +1,4 @@
-package com.jonathanleite.vitrine.order_service.entity;
+package com.jonathanleite.vitrine.orderservice.entity;
 
 public enum OrderStatus {
     CREATED,

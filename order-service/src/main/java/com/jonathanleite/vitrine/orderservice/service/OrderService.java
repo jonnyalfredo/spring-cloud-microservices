@@ -1,7 +1,7 @@
 package com.jonathanleite.vitrine.orderservice.service;
 
-import com.jonathanleite.vitrine.orderservice.Order;
-import com.jonathanleite.vitrine.orderservice.OrderStatus;
+import com.jonathanleite.vitrine.orderservice.entity.Order;
+import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;

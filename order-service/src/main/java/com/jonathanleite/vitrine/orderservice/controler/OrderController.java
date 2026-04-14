@@ -1,6 +1,6 @@
 package com.jonathanleite.vitrine.orderservice.controller;
 
-import com.jonathanleite.vitrine.orderservice.OrderStatus;
+import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
 import com.jonathanleite.vitrine.orderservice.service.OrderService;
