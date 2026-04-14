@@ -1,11 +1,13 @@
-package com.jonathanleite.vitrine.order_service;
+package com.jonathanleite.vitrine.orderservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
-@EnableFeignClients
+@EnableFeignClients(basePackages = "com.jonathanleite.vitrine.orderservice.client")
+@EnableDiscoveryClient
 public class OrderServiceApplication {
 
 	public static void main(String[] args) {
