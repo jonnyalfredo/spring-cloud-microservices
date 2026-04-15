@@ -28,6 +28,10 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    @GetMapping("/public/test")
+    public ResponseEntity<String> publicTest() {
+        return ResponseEntity.ok("Order API public endpoint OK");
+    }
     // =========================================================
     // ✅ CRIAR PEDIDO
     // =========================================================
