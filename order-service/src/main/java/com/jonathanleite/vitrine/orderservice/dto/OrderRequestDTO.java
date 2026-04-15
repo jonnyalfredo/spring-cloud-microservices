@@ -13,7 +13,7 @@ public class OrderRequestDTO {
 
     @NotNull(message = "Valor é obrigatório")
     @DecimalMin(value = "0.01", message = "O valor deve ser maior que zero")
-    private Double amount;
+    private BigDecimal amount;
 
     public OrderRequestDTO() {
     }

@@ -1,7 +1,7 @@
 package com.jonathanleite.vitrine.orderservice.service;
 
 import com.jonathanleite.vitrine.orderservice.entity.Order;
-import com.jonathanleite.vitrine.orderservice.enums.OrderStatus;
+import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
@@ -159,7 +159,7 @@ public class OrderService {
             throw new BusinessException("Descrição é obrigatória");
         }
 
-        if (request.getAmount() == null || request.getAmount() <= 0) {
+        if (request.getAmount() == null || request.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Valor deve ser maior que zero");
         }
     }
