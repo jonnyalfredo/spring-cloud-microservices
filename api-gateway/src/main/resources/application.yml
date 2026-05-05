@@ -18,6 +18,10 @@ spring:
             - Path=/api/v1/clients/**
           filters:
             - StripPrefix=2
+                - name: CircuitBreaker
+                args:
+                  name: clientServiceCircuitBreaker
+                  fallbackUri: forward:/fallback/client
 
         - id: order-service
           uri: lb://order-service
@@ -25,11 +29,30 @@ spring:
             - Path=/api/v1/orders/**
           filters:
             - StripPrefix=2
+                - name: CircuitBreaker
+                args:
+                  name: orderServiceCircuitBreaker
+                  fallbackUri: forward:/fallback/order
 
 eureka:
   client:
     service-url:
       defaultZone: http://service-registry:8761/eureka
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      clientServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+      orderServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
 
 management:
   endpoints:
