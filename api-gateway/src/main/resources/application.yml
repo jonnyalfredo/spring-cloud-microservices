@@ -1,6 +1,9 @@
 server:
   port: 8080
 
+jwt:
+  secret: my-secret-key
+
 spring:
   application:
     name: api-gateway

@@ -6,19 +6,30 @@ import io.jsonwebtoken.SignatureException;
 
 public class JwtUtil {
 
-    private static final String SECRET = "my-secret-key";
+    @Value("${jwt.secret}")
+    private String secret;
 
-    public static Claims validateToken(String token) {
+    /**
+     * Valida o token JWT e retorna os claims
+     */
+    public Claims validateToken(String token) {
         try {
             return Jwts.parser()
-                    .setSigningKey(SECRET)
+                    .setSigningKey(secret)
                     .parseClaimsJws(token)
                     .getBody();
 
         } catch (SignatureException e) {
-            throw new RuntimeException("Token inválido");
+            throw new RuntimeException("Invalid JWT signature");
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao validar token");
+            throw new RuntimeException("Invalid or expired JWT token");
         }
+    }
+
+    /**
+     * Extrai o username (subject) do token
+     */
+    public String extractUsername(Claims claims) {
+        return claims.getSubject();
     }
 }
