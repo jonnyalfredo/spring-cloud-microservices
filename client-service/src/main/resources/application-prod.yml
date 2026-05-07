@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: client-api
+
+  datasource:
+    url: jdbc:postgresql://postgres-client:5432/clientdb
+    username: clientuser
+    password: clientpass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  sql:
+    init:
+      mode: never
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-registry:8761/eureka
+  instance:
+    prefer-ip-address: true
