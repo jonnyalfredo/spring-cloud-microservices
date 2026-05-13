@@ -1,253 +1,204 @@
-<h1 align="center">📦 Order Service</h1>
+# 🚀 Spring Cloud Microservices
 
 <p align="center">
-  Microserviço responsável pelo gerenciamento de pedidos em uma arquitetura distribuída
+
+Microservices architecture project built with Java and Spring ecosystem.
+
+Focused on scalability, distributed systems, cloud-native applications, and backend engineering best practices.
+
 </p>
 
-<hr/>
+---
 
-<h2>🧩 Visão Geral</h2>
-<p>
-O <b>Order Service</b> é um microserviço responsável por gerenciar pedidos dentro de uma arquitetura distribuída,
-realizando criação, validação, persistência e controle de status dos pedidos.
-</p>
+# 📌 Overview
 
-<h2>🎯 Objetivo</h2>
-<ul>
-  <li>Criar e gerenciar pedidos</li>
-  <li>Validar clientes via API externa</li>
-  <li>Aplicar regras de negócio</li>
-  <li>Preparar para arquitetura orientada a eventos</li>
-</ul>
+This project was created to study and implement a real-world microservices architecture using the Spring ecosystem.
 
-<h2>🏗️ Arquitetura</h2>
-<ul>
-  <li>🔍 Service Discovery (Eureka)</li>
-  <li>🚪 API Gateway</li>
-  <li>🔗 Client API (OpenFeign)</li>
-  <li>🐘 PostgreSQL</li>
-</ul>
+The main goal is to simulate enterprise backend scenarios involving:
 
-<h2>⚙️ Tecnologias</h2>
-<p>
-Java 17 • Spring Boot • Spring Data JPA • Spring Cloud • PostgreSQL • Docker • Maven
-</p>
+- Distributed systems
+- Service communication
+- API Gateway
+- Centralized configuration
+- Service discovery
+- Containerized environments
+- Scalable backend architecture
 
-<hr/>
+⚠️ This project is still under active development and new features/services are continuously being added.
 
-<h2>📁 Estrutura do Projeto</h2>
+---
 
-<pre>
-order-service
-├── controller
-├── service
-├── repository
-├── entity
-├── enums
-├── dto
-├── client
-├── exception
-</pre>
+# 🏗️ Architecture
 
-<hr/>
+The project follows a microservices architecture pattern using Spring Cloud components.
 
-<h2>🔄 Fluxo de Criação de Pedido</h2>
+## Current Architecture Components
 
-<pre>
-Client → API Gateway → Order Service → Client API → Banco de Dados
-</pre>
+- API Gateway
+- Eureka Service Discovery
+- Config Server
+- Independent Microservices
+- Centralized Configuration
+- REST Communication
+- Dockerized Environment
 
-<ol>
-  <li>Requisição chega pelo Gateway</li>
-  <li>Order Service valida os dados</li>
-  <li>Consulta Client API</li>
-  <li>Valida cliente</li>
-  <li>Salva no banco</li>
-  <li>Retorna resposta</li>
-</ol>
+---
 
-<hr/>
+# 🔧 Technologies
 
-<h2>📌 Endpoints</h2>
+## Backend
 
-<h3>➕ Criar Pedido</h3>
-<pre>
-POST /api/orders
-</pre>
+- Java
+- Spring Boot
+- Spring Cloud
+- Spring Web
+- Spring Data JPA
+- Maven
 
-<b>Request</b>
-<pre>
-{
-  "clientId": 1,
-  "description": "Compra de insumos",
-  "amount": 150.00
-}
-</pre>
+## Cloud & Infrastructure
 
-<b>Response</b>
-<pre>
-{
-  "id": 10,
-  "clientId": 1,
-  "description": "Compra de insumos",
-  "amount": 150.00,
-  "status": "CREATED"
-}
-</pre>
+- Eureka Server
+- Spring Cloud Gateway
+- Config Server
+- Docker
+- Docker Compose
 
-<h3>🔍 Buscar Pedido</h3>
-<pre>GET /api/orders/{id}</pre>
+## Database
 
-<h3>📋 Listar Pedidos</h3>
-<pre>GET /api/orders?page=0&size=10</pre>
+- PostgreSQL
+- Oracle
 
-<h3>🔄 Atualizar Status</h3>
-<pre>PATCH /api/orders/{id}/status?status=PROCESSING</pre>
+---
 
-<hr/>
+# 📂 Project Structure
 
-<h2>⚠️ Regras de Negócio</h2>
-<ul>
-  <li>Cliente deve existir</li>
-  <li>Cliente deve estar ativo</li>
-  <li>Valor deve ser maior que zero</li>
-  <li>Status inicial: <b>CREATED</b></li>
-</ul>
+```bash
+spring-cloud-microservices/
+│
+├── api-gateway/
+├── discovery-server/
+├── config-server/
+├── service-1/
+├── service-2/
+└── docker-compose.yml
+```
 
-<h3>🔄 Fluxo de Status</h3>
-<pre>
-CREATED → PROCESSING → COMPLETED
-</pre>
+Each service is independently deployable and follows microservices principles.
 
-<ul>
-  <li>Não permite alterar pedidos finalizados</li>
-</ul>
+---
 
-<hr/>
+# 🌐 Microservices Concepts Applied
 
-<h2>🚨 Tratamento de Erros</h2>
+This project was designed to practice and improve knowledge in:
 
-<table border="1" cellpadding="6">
-<tr>
-<th>Situação</th>
-<th>Status</th>
-</tr>
-<tr>
-<td>Cliente não encontrado</td>
-<td>404</td>
-</tr>
-<tr>
-<td>Cliente inativo</td>
-<td>400</td>
-</tr>
-<tr>
-<td>Dados inválidos</td>
-<td>400</td>
-</tr>
-<tr>
-<td>Erro interno</td>
-<td>500</td>
-</tr>
-</table>
+- Microservices Architecture
+- Distributed Systems
+- Service Discovery
+- API Gateway Pattern
+- Externalized Configuration
+- Scalability Concepts
+- Backend Communication
+- Cloud-Native Applications
 
-<p><b>Classes utilizadas:</b></p>
-<ul>
-  <li>BusinessException</li>
-  <li>ResourceNotFoundException</li>
-  <li>GlobalExceptionHandler</li>
-</ul>
+---
 
-<hr/>
+# 🚀 Running the Project
 
-<h2>📊 Paginação</h2>
+## Clone Repository
 
-<pre>
-GET /api/orders?page=0&size=5&sort=createdAt,desc
-</pre>
+```bash
+git clone https://github.com/jonnyalfredo/spring-cloud-microservices.git
+```
 
-<p>Retorno inclui:</p>
-<ul>
-  <li>content</li>
-  <li>totalElements</li>
-  <li>totalPages</li>
-  <li>page</li>
-</ul>
+---
 
-<hr/>
+## Access Project Folder
 
-<h2>🧪 Testes</h2>
+```bash
+cd spring-cloud-microservices
+```
 
-<ul>
-  <li>✅ Criar pedido válido</li>
-  <li>❌ Cliente inexistente</li>
-  <li>❌ Cliente inativo</li>
-  <li>🔁 Atualizar status</li>
-  <li>📄 Paginação</li>
-</ul>
+---
 
-<p><b>Ferramentas:</b> Postman, cURL</p>
+## Run with Docker Compose
 
-<hr/>
+```bash
+docker-compose up
+```
 
-<h2>🔗 Integração</h2>
+---
 
-<pre>
-GET /clients/{id}
-</pre>
+# 📡 Services
 
-<ul>
-  <li>Validação de cliente</li>
-  <li>Status ativo/inativo</li>
-</ul>
+| Service | Description |
+|---|---|
+| API Gateway | Centralized entry point |
+| Eureka Server | Service discovery |
+| Config Server | Centralized configuration |
+| Microservices | Business domain services |
 
-<hr/>
+---
 
-<h2>🚀 Execução</h2>
+# 📈 Project Goals
 
-<h3>🐳 Docker</h3>
-<pre>docker-compose up --build</pre>
+This repository is part of my backend engineering studies focused on:
 
-<h3>💻 Local</h3>
-<pre>
-mvn clean package
-mvn spring-boot:run
-</pre>
+- Enterprise Java Development
+- Spring Ecosystem
+- Cloud Applications
+- Distributed Architecture
+- Scalable Systems
+- Software Architecture
 
-<hr/>
+---
 
-<h2>📡 Service Discovery</h2>
-<pre>http://localhost:8761</pre>
+# 🔥 Future Improvements
 
-<hr/>
+The following features are planned for the next versions of the project:
 
-<h2>📈 Melhorias Futuras</h2>
-<ul>
-  <li>Resilience4j</li>
-  <li>Retry e Timeout</li>
-  <li>RabbitMQ</li>
-  <li>Actuator + métricas</li>
-  <li>Testes automatizados</li>
-</ul>
+- [ ] JWT Authentication
+- [ ] Spring Security
+- [ ] Kafka/RabbitMQ Integration
+- [ ] Distributed Tracing
+- [ ] Centralized Logging
+- [ ] Unit and Integration Tests
+- [ ] CI/CD Pipeline
+- [ ] Kubernetes Deployment
+- [ ] Observability with Prometheus/Grafana
+- [ ] Resilience Patterns
+- [ ] OpenFeign Communication
+- [ ] API Documentation with Swagger/OpenAPI
 
-<hr/>
+---
 
-<h2>🧠 Destaques Técnicos</h2>
-<ul>
-  <li>Arquitetura de microserviços</li>
-  <li>OpenFeign</li>
-  <li>Eureka</li>
-  <li>Paginação</li>
-  <li>Regras de negócio</li>
-  <li>Logs estruturados</li>
-</ul>
+# 📚 Learning Objectives
 
-<hr/>
+This project is being used to deepen my knowledge in:
 
-<h2>👨‍💻 Autor</h2>
-<p><b>Jonathan Leite</b></p>
+- Java Backend Development
+- Cloud-Native Architecture
+- Scalable Backend Systems
+- Enterprise Software Development
+- Modern Spring Ecosystem
 
-<hr/>
+---
 
-<p align="center">
-  🚀 Projeto desenvolvido para demonstrar arquitetura moderna de microserviços
-</p>
+# 👨‍💻 About Me
+
+Software Engineering graduate with professional experience in Cloud and IT environments, currently focused on Backend Development using Java and Spring technologies.
+
+---
+
+# 📫 Contact
+
+## LinkedIn
+
+www.linkedin.com/in/jonathan-alfredo-leite
+
+---
+
+# ⭐ Repository Status
+
+🚧 In active development
+
+New services, improvements, and architectural features are continuously being implemented.
