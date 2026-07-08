@@ -10,8 +10,10 @@ import com.jonathanleite.vitrine.orderservice.client.ClientServiceClient;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
 import com.jonathanleite.vitrine.orderservice.exception.ResourceNotFoundException;
 
+import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Page;
@@ -131,17 +133,26 @@ public class OrderService {
 
     private ClientResponseDTO getClient(Long clientId) {
         try {
-            return clientServiceClient.getClientById(clientId);
+            return clientServiceClient.getClientById(clientId, ClientServiceClient.SERVICE_USER_ID);
+        } catch (FeignException.NotFound ex) {
+            log.warn("Cliente não encontrado no client-api clientId={}", clientId);
+            throw new ResourceNotFoundException("Cliente não encontrado", "CLIENT_NOT_FOUND");
+        } catch (BusinessException | ResourceNotFoundException ex) {
+            throw ex;
         } catch (Exception ex) {
-            log.error("Erro ao chamar client-api para clientId={}", clientId, ex);
-            throw new BusinessException("Erro ao validar cliente");
+            log.error("Erro ao chamar client-api para clientId={}: {}", clientId, ex.getMessage());
+            throw new BusinessException(
+                    "Não foi possível validar o cliente no momento",
+                    "CLIENT_SERVICE_UNAVAILABLE",
+                    HttpStatus.SERVICE_UNAVAILABLE
+            );
         }
     }
 
     private void validateClient(ClientResponseDTO client) {
 
         if (client == null) {
-            throw new ResourceNotFoundException("Cliente não encontrado");
+            throw new ResourceNotFoundException("Cliente não encontrado", "CLIENT_NOT_FOUND");
         }
 
         if (!client.isActive()) {

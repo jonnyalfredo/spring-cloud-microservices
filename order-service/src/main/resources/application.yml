@@ -20,6 +20,14 @@ spring:
   cloud:
     discovery:
       enabled: true
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
+clients:
+  service:
+    # Empty by default: Feign uses Eureka. Set CLIENT_SERVICE_URL=http://localhost:8081 to run locally without discovery.
+    url: ${CLIENT_SERVICE_URL:}
 
 server:
   port: 8083
