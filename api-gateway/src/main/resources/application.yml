@@ -2,7 +2,7 @@ server:
   port: 8080
 
 jwt:
-  secret: my-secret-key
+  secret: ${JWT_SECRET:}
 
 spring:
   application:
@@ -57,8 +57,9 @@ spring:
 
 eureka:
   client:
+    enabled: false
     service-url:
-      defaultZone: http://service-registry:8761/eureka
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka}
 
 # =============================
 # RESILIENCE CONFIGURATION
