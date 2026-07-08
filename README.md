@@ -302,6 +302,47 @@ curl -i http://localhost:8080/api/v1/orders
 
 Resposta esperada: `401 Unauthorized`.
 
+## Collection Postman
+
+O projeto inclui uma collection para testes manuais e demonstracao:
+
+- Collection: [postman/spring-cloud-microservices.postman_collection.json](postman/spring-cloud-microservices.postman_collection.json)
+- Ambiente local: [postman/local.postman_environment.json](postman/local.postman_environment.json)
+- Ambiente Docker: [postman/docker.postman_environment.json](postman/docker.postman_environment.json)
+
+Como usar:
+
+1. Abra o Postman.
+2. Importe a collection `spring-cloud-microservices.postman_collection.json`.
+3. Importe um dos ambientes:
+   - `local.postman_environment.json`, para servicos rodando localmente nas portas `8080`, `8081` e `8083`.
+   - `docker.postman_environment.json`, para o projeto rodando com `docker compose up --build`.
+4. Selecione o ambiente importado no canto superior direito do Postman.
+5. Execute as pastas na ordem da collection.
+
+Fluxo coberto pela collection:
+
+- Health check do gateway, client-service e order-service.
+- Rota publica via gateway.
+- Rota protegida sem token retornando `401`.
+- Criacao de cliente.
+- Listagem de clientes.
+- Atualizacao completa de cliente.
+- Atualizacao parcial de cliente.
+- Erro de validacao ao criar cliente.
+- Criacao de pedido usando o cliente criado.
+- Listagem de pedidos.
+- Alteracao de status do pedido.
+- Erro de validacao ao criar pedido.
+- Limpeza do cliente criado.
+
+Observacoes:
+
+- A collection usa os endpoints diretos de `client-service` e `order-service` para o fluxo completo porque o projeto ainda nao possui um auth-service para emitir JWT.
+- A request `Criar cliente` gera email e documento dinamicos e salva o `clientId` automaticamente.
+- A request `Criar pedido` usa o `clientId` salvo e grava o `orderId` automaticamente.
+- A pasta `05 - Limpeza` deve ser executada somente depois dos testes de pedido.
+
 ## Formato padrao de erro
 
 Os servicos retornam erros em formato padronizado:
