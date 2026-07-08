@@ -11,6 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_client_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clientuser -d clientdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - vitrine-network
 
@@ -25,6 +30,11 @@ services:
       - "5434:5432"
     volumes:
       - postgres_order_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U order -d orderdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - vitrine-network
 
@@ -33,6 +43,12 @@ services:
     container_name: service-registry
     ports:
       - "8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - vitrine-network
 
@@ -40,13 +56,21 @@ services:
     build: ./client-service
     container_name: client-api
     depends_on:
-      - postgres-client
-      - service-registry
+      postgres-client:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
     ports:
       - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8081/clients/public/test || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - vitrine-network
 
@@ -54,15 +78,24 @@ services:
     build: ./order-service
     container_name: order-service
     depends_on:
-      - postgres-order
-      - service-registry
-      - client-api
+      postgres-order:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      client-api:
+        condition: service_healthy
     ports:
       - "8083:8083"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka
       CLIENT_SERVICE_URL: http://client-api:8081
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8083/orders/public/test || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - vitrine-network
 
@@ -70,14 +103,23 @@ services:
     build: ./api-gateway
     container_name: api-gateway
     depends_on:
-      - service-registry
-      - client-api
-      - order-service
+      service-registry:
+        condition: service_healthy
+      client-api:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - vitrine-network
 
