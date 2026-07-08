@@ -1,39 +1,89 @@
 server:
   port: 8080
 
+jwt:
+  secret: ${JWT_SECRET:}
+
 spring:
   application:
     name: api-gateway
 
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+
+      default-filters:
+        - AddResponseHeader=X-Gateway, API-Gateway
 
       routes:
         - id: client-api
           uri: lb://client-api
           predicates:
-            - Path=/api/clients/**
+            - Path=/api/v1/clients/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=2
+
+            # 🔁 Retry
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY, GATEWAY_TIMEOUT, INTERNAL_SERVER_ERROR
+                methods: GET
+
+            # ⚡ Circuit Breaker
+            - name: CircuitBreaker
+              args:
+                name: clientServiceCircuitBreaker
+                fallbackUri: forward:/fallback/client
 
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/api/orders/**
+            - Path=/api/v1/orders/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=2
+
+            # 🔁 Retry
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY, GATEWAY_TIMEOUT, INTERNAL_SERVER_ERROR
+                methods: GET
+
+            # ⚡ Circuit Breaker
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/order
 
 eureka:
   client:
+    enabled: false
     service-url:
-      defaultZone: http://service-registry:8761/eureka
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka}
+
+# =============================
+# RESILIENCE CONFIGURATION
+# =============================
+resilience4j:
+  circuitbreaker:
+    instances:
+      clientServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+      orderServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always

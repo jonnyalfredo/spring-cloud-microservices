@@ -1,7 +1,18 @@
-FROM eclipse-temurin:17-jdk-alpine
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+
+WORKDIR /build
+
+COPY pom.xml .
+COPY src ./src
+
+RUN mvn -DskipTests package
+
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-COPY target/api-gateway-*.jar app.jar
+COPY --from=build /build/target/api-gateway-*.jar app.jar
+
+EXPOSE 8080
 
 ENTRYPOINT ["java","-jar","/app/app.jar"]

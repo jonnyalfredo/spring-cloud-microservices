@@ -1,7 +1,7 @@
 package com.jonathanleite.vitrine.orderservice.service;
 
 import com.jonathanleite.vitrine.orderservice.entity.Order;
-import com.jonathanleite.vitrine.orderservice.enums.OrderStatus;
+import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
@@ -10,8 +10,10 @@ import com.jonathanleite.vitrine.orderservice.client.ClientServiceClient;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
 import com.jonathanleite.vitrine.orderservice.exception.ResourceNotFoundException;
 
+import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Page;
@@ -131,17 +133,26 @@ public class OrderService {
 
     private ClientResponseDTO getClient(Long clientId) {
         try {
-            return clientServiceClient.getClientById(clientId);
+            return clientServiceClient.getClientById(clientId, ClientServiceClient.SERVICE_USER_ID);
+        } catch (FeignException.NotFound ex) {
+            log.warn("Cliente não encontrado no client-api clientId={}", clientId);
+            throw new ResourceNotFoundException("Cliente não encontrado", "CLIENT_NOT_FOUND");
+        } catch (BusinessException | ResourceNotFoundException ex) {
+            throw ex;
         } catch (Exception ex) {
-            log.error("Erro ao chamar client-api para clientId={}", clientId, ex);
-            throw new BusinessException("Erro ao validar cliente");
+            log.error("Erro ao chamar client-api para clientId={}: {}", clientId, ex.getMessage());
+            throw new BusinessException(
+                    "Não foi possível validar o cliente no momento",
+                    "CLIENT_SERVICE_UNAVAILABLE",
+                    HttpStatus.SERVICE_UNAVAILABLE
+            );
         }
     }
 
     private void validateClient(ClientResponseDTO client) {
 
         if (client == null) {
-            throw new ResourceNotFoundException("Cliente não encontrado");
+            throw new ResourceNotFoundException("Cliente não encontrado", "CLIENT_NOT_FOUND");
         }
 
         if (!client.isActive()) {
@@ -159,7 +170,7 @@ public class OrderService {
             throw new BusinessException("Descrição é obrigatória");
         }
 
-        if (request.getAmount() == null || request.getAmount() <= 0) {
+        if (request.getAmount() == null || request.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Valor deve ser maior que zero");
         }
     }

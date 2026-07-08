@@ -1,204 +1,459 @@
-# 🚀 Spring Cloud Microservices
+# Spring Cloud Microservices - Clientes e Pedidos
 
-<p align="center">
+![Java](https://img.shields.io/badge/Java-17-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
+![Docker](https://img.shields.io/badge/Docker-ready-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-black)
 
-Microservices architecture project built with Java and Spring ecosystem.
+Projeto de portfolio backend Java com arquitetura de microservicos usando Spring Boot, Spring Cloud, API Gateway, Eureka, PostgreSQL, Docker e testes automatizados.
 
-Focused on scalability, distributed systems, cloud-native applications, and backend engineering best practices.
+O objetivo e demonstrar uma base realista de backend corporativo: separacao por servicos, comunicacao entre APIs, validacoes de negocio, tratamento padronizado de erros, Docker Compose e testes que comprovam regras importantes.
 
-</p>
+## Problema de negocio
 
----
+O sistema simula uma plataforma simples de pedidos:
 
-# 📌 Overview
+- O `client-service` cadastra e gerencia clientes.
+- O `order-service` cria e gerencia pedidos.
+- Um pedido so pode ser criado para um cliente existente e ativo.
+- Clientes nao podem ter email ou documento duplicado.
+- Pedidos possuem fluxo de status e nao podem ser alterados quando finalizados.
+- O `api-gateway` centraliza o acesso externo, propaga correlation id e protege rotas privadas com JWT.
 
-This project was created to study and implement a real-world microservices architecture using the Spring ecosystem.
+Esse cenario foi escolhido porque representa problemas comuns em backend: CRUD, integracao entre servicos, validacao de regras, resiliencia basica, configuracao por ambiente e execucao local com containers.
 
-The main goal is to simulate enterprise backend scenarios involving:
+## Diagrama de arquitetura
 
-- Distributed systems
-- Service communication
-- API Gateway
-- Centralized configuration
-- Service discovery
-- Containerized environments
-- Scalable backend architecture
+```mermaid
+flowchart LR
+    User["Cliente HTTP"] --> Gateway["API Gateway :8080"]
+    Gateway --> Client["client-service :8081"]
+    Gateway --> Order["order-service :8083"]
+    Order -->|Feign| Client
+    Client --> ClientDb["PostgreSQL Client :5432"]
+    Order --> OrderDb["PostgreSQL Order :5434"]
+    Client --> Eureka["Eureka :8761"]
+    Order --> Eureka
+    Gateway --> Eureka
+```
 
-⚠️ This project is still under active development and new features/services are continuously being added.
+### Servicos
 
----
+| Servico | Porta | Responsabilidade |
+| --- | --- | --- |
+| `api-gateway` | `8080` | Entrada unica, JWT, correlation id, roteamento e circuit breaker |
+| `client-service` | `8081` | CRUD de clientes, filtros, paginacao e validacao de duplicidade |
+| `order-service` | `8083` | Pedidos, regras de status e consulta de clientes via Feign |
+| `service-registry` | `8761` | Service discovery com Eureka |
+| `postgres-client` | `5432` | Banco do client-service |
+| `postgres-order` | `5434` | Banco do order-service |
 
-# 🏗️ Architecture
+## Tecnologias
 
-The project follows a microservices architecture pattern using Spring Cloud components.
-
-## Current Architecture Components
-
-- API Gateway
-- Eureka Service Discovery
-- Config Server
-- Independent Microservices
-- Centralized Configuration
-- REST Communication
-- Dockerized Environment
-
----
-
-# 🔧 Technologies
-
-## Backend
-
-- Java
+- Java 17
 - Spring Boot
-- Spring Cloud
 - Spring Web
 - Spring Data JPA
-- Maven
-
-## Cloud & Infrastructure
-
-- Eureka Server
+- Spring Validation
 - Spring Cloud Gateway
-- Config Server
-- Docker
-- Docker Compose
-
-## Database
-
+- Spring Cloud OpenFeign
+- Spring Cloud Netflix Eureka
+- Resilience4j
 - PostgreSQL
-- Oracle
+- H2 para execucao local/testes sem Docker
+- Maven
+- Docker e Docker Compose
+- JUnit 5, Mockito e MockMvc
 
----
+## Diferenciais tecnicos
 
-# 📂 Project Structure
+- Arquitetura de microservicos com separacao real por dominio.
+- Banco de dados separado por servico.
+- Comunicacao entre servicos com OpenFeign.
+- Service Discovery com Eureka.
+- API Gateway com filtros globais, JWT e correlation id.
+- Tratamento padronizado de erros com `correlationId`.
+- Profiles separados para local, Docker e producao.
+- Segredos externalizados por variaveis de ambiente.
+- Dockerfiles multi-stage sem dependencia de JAR pre-gerado.
+- Testes unitarios, MVC e de contrato cobrindo regras de negocio.
+- Collection Postman para demonstracao manual do fluxo completo.
+- Pipeline CI com Maven test e Docker build.
 
-```bash
-spring-cloud-microservices/
-│
-├── api-gateway/
-├── discovery-server/
-├── config-server/
-├── service-1/
-├── service-2/
-└── docker-compose.yml
-```
+## CI/CD
 
-Each service is independently deployable and follows microservices principles.
+O projeto possui GitHub Actions em [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
----
+O pipeline roda automaticamente em `push` e `pull_request` e valida:
 
-# 🌐 Microservices Concepts Applied
+- `mvn clean test` em `client-service`, `order-service`, `api-gateway` e `service-registry`.
+- `docker build` dos quatro servicos, sem publicar imagens.
 
-This project was designed to practice and improve knowledge in:
+## Como rodar com Docker
 
-- Microservices Architecture
-- Distributed Systems
-- Service Discovery
-- API Gateway Pattern
-- Externalized Configuration
-- Scalability Concepts
-- Backend Communication
-- Cloud-Native Applications
+Pre-requisitos:
 
----
+- Docker Desktop
+- Git
 
-# 🚀 Running the Project
-
-## Clone Repository
+Passos:
 
 ```bash
-git clone https://github.com/jonnyalfredo/spring-cloud-microservices.git
-```
-
----
-
-## Access Project Folder
-
-```bash
+git clone <url-do-repositorio>
 cd spring-cloud-microservices
+cp .env.example .env
+docker compose up --build
 ```
 
----
+No PowerShell, se preferir:
 
-## Run with Docker Compose
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+URLs principais:
+
+- API Gateway: `http://localhost:8080`
+- Client Service direto: `http://localhost:8081`
+- Order Service direto: `http://localhost:8083`
+- Eureka Dashboard: `http://localhost:8761`
+- Swagger Client Service: `http://localhost:8081/swagger-ui/index.html`
+- Swagger Order Service: `http://localhost:8083/swagger-ui/index.html`
+- Actuator Gateway: `http://localhost:8080/actuator/health`
+- Actuator Client Service: `http://localhost:8081/actuator/health`
+- Actuator Order Service: `http://localhost:8083/actuator/health`
+- Actuator Service Registry: `http://localhost:8761/actuator/health`
+
+Para parar:
 
 ```bash
-docker-compose up
+docker compose down
 ```
 
----
+Para parar removendo volumes locais:
 
-# 📡 Services
+```bash
+docker compose down -v
+```
 
-| Service | Description |
-|---|---|
-| API Gateway | Centralized entry point |
-| Eureka Server | Service discovery |
-| Config Server | Centralized configuration |
-| Microservices | Business domain services |
+## Como rodar localmente sem Docker
 
----
+Cada servico usa H2 no profile padrao. Esse modo e util para testar regras de negocio e endpoints diretos sem subir PostgreSQL. Para validar o fluxo completo com Gateway + Eureka + bancos PostgreSQL, prefira Docker Compose.
 
-# 📈 Project Goals
+Para rodar localmente, abra um terminal por servico:
 
-This repository is part of my backend engineering studies focused on:
+```bash
+cd service-registry
+mvn spring-boot:run
+```
 
-- Enterprise Java Development
-- Spring Ecosystem
-- Cloud Applications
-- Distributed Architecture
-- Scalable Systems
-- Software Architecture
+```bash
+cd client-service
+mvn spring-boot:run
+```
 
----
+```bash
+cd order-service
+mvn spring-boot:run
+```
 
-# 🔥 Future Improvements
+```bash
+cd api-gateway
+mvn spring-boot:run
+```
 
-The following features are planned for the next versions of the project:
+No Linux/macOS, defina o segredo antes de iniciar o gateway:
 
-- [ ] JWT Authentication
-- [ ] Spring Security
-- [ ] Kafka/RabbitMQ Integration
-- [ ] Distributed Tracing
-- [ ] Centralized Logging
-- [ ] Unit and Integration Tests
-- [ ] CI/CD Pipeline
-- [ ] Kubernetes Deployment
-- [ ] Observability with Prometheus/Grafana
-- [ ] Resilience Patterns
-- [ ] OpenFeign Communication
-- [ ] API Documentation with Swagger/OpenAPI
+```bash
+export JWT_SECRET=local-validation-secret-with-at-least-32-characters
+mvn spring-boot:run
+```
 
----
+No PowerShell:
 
-# 📚 Learning Objectives
+```powershell
+$env:JWT_SECRET="local-validation-secret-with-at-least-32-characters"
+mvn spring-boot:run
+```
 
-This project is being used to deepen my knowledge in:
+Observacao: para o fluxo completo via gateway em rotas protegidas, envie um JWT valido assinado com o mesmo `JWT_SECRET`. O projeto ainda nao possui um auth-service para emitir tokens; os endpoints publicos e os servicos diretos podem ser usados para validacao local.
 
-- Java Backend Development
-- Cloud-Native Architecture
-- Scalable Backend Systems
-- Enterprise Software Development
-- Modern Spring Ecosystem
+## Variaveis de ambiente
 
----
+Crie um `.env` a partir do `.env.example` antes de usar Docker Compose.
 
-# 👨‍💻 About Me
+| Variavel | Uso |
+| --- | --- |
+| `CLIENT_DB_NAME` | Nome do banco PostgreSQL do client-service |
+| `CLIENT_DB_USER` | Usuario do banco do client-service |
+| `CLIENT_DB_PASSWORD` | Senha do banco do client-service |
+| `ORDER_DB_NAME` | Nome do banco PostgreSQL do order-service |
+| `ORDER_DB_USER` | Usuario do banco do order-service |
+| `ORDER_DB_PASSWORD` | Senha do banco do order-service |
+| `JWT_SECRET` | Segredo usado pelo gateway para validar JWT |
+| `EUREKA_DEFAULT_ZONE` | URL do Eureka dentro do Docker |
+| `CLIENT_SERVICE_URL` | URL interna usada pelo order-service para consultar clientes |
 
-Software Engineering graduate with professional experience in Cloud and IT environments, currently focused on Backend Development using Java and Spring technologies.
+Exemplo para Docker:
 
----
+```env
+CLIENT_DB_NAME=clientdb
+CLIENT_DB_USER=clientuser
+CLIENT_DB_PASSWORD=change-me-client-password
 
-# 📫 Contact
+ORDER_DB_NAME=orderdb
+ORDER_DB_USER=orderuser
+ORDER_DB_PASSWORD=change-me-order-password
 
-## LinkedIn
+JWT_SECRET=change-me-to-a-long-random-secret-with-at-least-32-characters
+EUREKA_DEFAULT_ZONE=http://service-registry:8761/eureka
+CLIENT_SERVICE_URL=http://client-api:8081
+```
 
-www.linkedin.com/in/jonathan-alfredo-leite
+## Endpoints principais
 
----
+### Gateway
 
-# ⭐ Repository Status
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| `GET` | `/api/v1/clients/public/test` | Rota publica do client-service |
+| `GET` | `/api/v1/orders/public/test` | Rota publica do order-service |
+| `GET` | `/api/v1/clients` | Lista clientes, requer JWT |
+| `POST` | `/api/v1/clients` | Cria cliente, requer JWT |
+| `GET` | `/api/v1/orders` | Lista pedidos, requer JWT |
+| `POST` | `/api/v1/orders` | Cria pedido, requer JWT |
 
-🚧 In active development
+### Client Service direto
 
-New services, improvements, and architectural features are continuously being implemented.
+Base URL: `http://localhost:8081`
+
+O controller de clientes exige o header `X-User-Id` nas rotas privadas quando acessado diretamente.
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| `GET` | `/clients/public/test` | Health funcional publico |
+| `POST` | `/clients` | Cria cliente |
+| `GET` | `/clients/{id}` | Busca cliente por ID |
+| `GET` | `/clients?page=0&size=10` | Lista clientes com paginacao |
+| `GET` | `/clients?email=a@b.com` | Filtra por email |
+| `GET` | `/clients?document=123` | Filtra por documento |
+| `PUT` | `/clients/{id}` | Atualiza cliente completo |
+| `PATCH` | `/clients/{id}` | Atualiza cliente parcial |
+| `DELETE` | `/clients/{id}` | Remove cliente |
+
+### Order Service direto
+
+Base URL: `http://localhost:8083`
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| `GET` | `/orders/public/test` | Health funcional publico |
+| `POST` | `/orders` | Cria pedido |
+| `GET` | `/orders/{id}` | Busca pedido por ID |
+| `GET` | `/orders?page=0&size=10` | Lista pedidos com paginacao |
+| `PATCH` | `/orders/{id}/status?status=PROCESSING` | Atualiza status |
+
+Status de pedido:
+
+- `CREATED`
+- `PROCESSING`
+- `COMPLETED`
+- `CANCELLED`
+
+Regras principais:
+
+- Pedido nasce com status `CREATED`.
+- `CREATED` nao pode ir direto para `COMPLETED`.
+- Pedidos `COMPLETED` ou `CANCELLED` nao podem ser alterados.
+- Valor do pedido deve ser maior que zero.
+- Cliente precisa existir e estar ativo.
+
+## Exemplos de requisicoes
+
+### Testar rota publica pelo gateway
+
+```bash
+curl http://localhost:8080/api/v1/clients/public/test
+```
+
+### Criar cliente direto no client-service
+
+```bash
+curl -X POST http://localhost:8081/clients \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: local-user" \
+  -H "X-Correlation-Id: demo-001" \
+  -d '{
+    "name": "Maria Souza",
+    "document": "12345678900",
+    "email": "maria.souza@email.com",
+    "phone": "11999999999"
+  }'
+```
+
+### Listar clientes
+
+```bash
+curl -H "X-User-Id: local-user" \
+  "http://localhost:8081/clients?page=0&size=10&sort=email,asc"
+```
+
+### Atualizacao parcial de cliente
+
+```bash
+curl -X PATCH http://localhost:8081/clients/1 \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: local-user" \
+  -d '{
+    "phone": "11888888888"
+  }'
+```
+
+### Criar pedido direto no order-service
+
+```bash
+curl -X POST http://localhost:8083/orders \
+  -H "Content-Type: application/json" \
+  -H "X-Correlation-Id: demo-002" \
+  -d '{
+    "clientId": 1,
+    "description": "Compra de materiais",
+    "amount": 150.00
+  }'
+```
+
+### Atualizar status do pedido
+
+```bash
+curl -X PATCH "http://localhost:8083/orders/1/status?status=PROCESSING"
+```
+
+### Rota protegida sem token no gateway
+
+```bash
+curl -i http://localhost:8080/api/v1/orders
+```
+
+Resposta esperada: `401 Unauthorized`.
+
+## Collection Postman
+
+O projeto inclui uma collection para testes manuais e demonstracao:
+
+- Collection: [postman/spring-cloud-microservices.postman_collection.json](postman/spring-cloud-microservices.postman_collection.json)
+- Ambiente local: [postman/local.postman_environment.json](postman/local.postman_environment.json)
+- Ambiente Docker: [postman/docker.postman_environment.json](postman/docker.postman_environment.json)
+
+Como usar:
+
+1. Abra o Postman.
+2. Importe a collection `spring-cloud-microservices.postman_collection.json`.
+3. Importe um dos ambientes:
+   - `local.postman_environment.json`, para servicos rodando localmente nas portas `8080`, `8081` e `8083`.
+   - `docker.postman_environment.json`, para o projeto rodando com `docker compose up --build`.
+4. Selecione o ambiente importado no canto superior direito do Postman.
+5. Execute as pastas na ordem da collection.
+
+Fluxo coberto pela collection:
+
+- Health check do gateway, client-service e order-service.
+- Rota publica via gateway.
+- Rota protegida sem token retornando `401`.
+- Criacao de cliente.
+- Listagem de clientes.
+- Atualizacao completa de cliente.
+- Atualizacao parcial de cliente.
+- Erro de validacao ao criar cliente.
+- Criacao de pedido usando o cliente criado.
+- Listagem de pedidos.
+- Alteracao de status do pedido.
+- Erro de validacao ao criar pedido.
+- Limpeza do cliente criado.
+
+Observacoes:
+
+- A collection usa os endpoints diretos de `client-service` e `order-service` para o fluxo completo porque o projeto ainda nao possui um auth-service para emitir JWT.
+- A request `Criar cliente` gera email e documento dinamicos e salva o `clientId` automaticamente.
+- A request `Criar pedido` usa o `clientId` salvo e grava o `orderId` automaticamente.
+- A pasta `05 - Limpeza` deve ser executada somente depois dos testes de pedido.
+
+## Formato padrao de erro
+
+Os servicos retornam erros em formato padronizado:
+
+```json
+{
+  "timestamp": "2026-07-08T15:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Erro de validacao",
+  "path": "/clients",
+  "correlationId": "demo-001",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Email invalido"
+    }
+  ]
+}
+```
+
+## Testes
+
+Executar todos os testes:
+
+```bash
+cd client-service && mvn clean test
+cd ../order-service && mvn clean test
+cd ../api-gateway && mvn clean test
+cd ../service-registry && mvn clean test
+```
+
+Coberturas relevantes:
+
+- Client: criacao, duplicidade de email/documento, patch parcial e paginacao.
+- Order: cliente ativo/inativo/inexistente, valor invalido e transicoes de status.
+- Gateway: rota publica, rota protegida sem token e propagacao de correlation id.
+
+## Comandos uteis
+
+```bash
+docker compose up --build
+docker compose ps
+docker compose logs -f api-gateway
+docker compose logs -f client-api
+docker compose logs -f order-service
+docker compose down
+docker compose down -v
+```
+
+Build manual de um servico:
+
+```bash
+cd client-service
+mvn clean package
+```
+
+Executar um servico:
+
+```bash
+mvn spring-boot:run
+```
+
+## Decisoes tecnicas relevantes
+
+- Cada microservico tem seu proprio banco de dados.
+- `order-service` consulta `client-service` via OpenFeign.
+- `api-gateway` adiciona/propaga `X-Correlation-Id`.
+- Erros seguem o mesmo contrato em `client-service` e `order-service`.
+- Configuracoes sensiveis ficam em variaveis de ambiente.
+- Dockerfiles fazem build multi-stage, sem depender de JAR gerado manualmente.
+- Testes foram ajustados para validar regra de negocio, nao apenas subir contexto.
+
+## Autor
+
+Jonathan Leite
+
+Projeto desenvolvido para portfolio profissional com foco em vagas de Desenvolvedor Backend Java.
