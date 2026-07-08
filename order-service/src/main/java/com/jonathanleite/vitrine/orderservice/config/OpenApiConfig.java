@@ -1,4 +1,4 @@
-package com.jonathanleite.clientapi.config;
+package com.jonathanleite.vitrine.orderservice.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
@@ -14,8 +14,8 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Client API")
-                        .description("API responsavel pelo gerenciamento de clientes")
+                        .title("Order Service API")
+                        .description("API responsavel pelo gerenciamento de pedidos")
                         .version("v1")
                         .contact(new Contact()
                                 .name("Jonathan Leite"))

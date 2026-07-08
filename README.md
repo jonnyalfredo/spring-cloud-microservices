@@ -1,5 +1,11 @@
 # Spring Cloud Microservices - Clientes e Pedidos
 
+![Java](https://img.shields.io/badge/Java-17-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)
+![Docker](https://img.shields.io/badge/Docker-ready-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-black)
+
 Projeto de portfolio backend Java com arquitetura de microservicos usando Spring Boot, Spring Cloud, API Gateway, Eureka, PostgreSQL, Docker e testes automatizados.
 
 O objetivo e demonstrar uma base realista de backend corporativo: separacao por servicos, comunicacao entre APIs, validacoes de negocio, tratamento padronizado de erros, Docker Compose e testes que comprovam regras importantes.
@@ -17,7 +23,7 @@ O sistema simula uma plataforma simples de pedidos:
 
 Esse cenario foi escolhido porque representa problemas comuns em backend: CRUD, integracao entre servicos, validacao de regras, resiliencia basica, configuracao por ambiente e execucao local com containers.
 
-## Arquitetura
+## Diagrama de arquitetura
 
 ```mermaid
 flowchart LR
@@ -60,6 +66,21 @@ flowchart LR
 - Docker e Docker Compose
 - JUnit 5, Mockito e MockMvc
 
+## Diferenciais tecnicos
+
+- Arquitetura de microservicos com separacao real por dominio.
+- Banco de dados separado por servico.
+- Comunicacao entre servicos com OpenFeign.
+- Service Discovery com Eureka.
+- API Gateway com filtros globais, JWT e correlation id.
+- Tratamento padronizado de erros com `correlationId`.
+- Profiles separados para local, Docker e producao.
+- Segredos externalizados por variaveis de ambiente.
+- Dockerfiles multi-stage sem dependencia de JAR pre-gerado.
+- Testes unitarios, MVC e de contrato cobrindo regras de negocio.
+- Collection Postman para demonstracao manual do fluxo completo.
+- Pipeline CI com Maven test e Docker build.
+
 ## CI/CD
 
 O projeto possui GitHub Actions em [.github/workflows/ci.yml](.github/workflows/ci.yml).
@@ -98,6 +119,12 @@ URLs principais:
 - Client Service direto: `http://localhost:8081`
 - Order Service direto: `http://localhost:8083`
 - Eureka Dashboard: `http://localhost:8761`
+- Swagger Client Service: `http://localhost:8081/swagger-ui/index.html`
+- Swagger Order Service: `http://localhost:8083/swagger-ui/index.html`
+- Actuator Gateway: `http://localhost:8080/actuator/health`
+- Actuator Client Service: `http://localhost:8081/actuator/health`
+- Actuator Order Service: `http://localhost:8083/actuator/health`
+- Actuator Service Registry: `http://localhost:8761/actuator/health`
 
 Para parar:
 
