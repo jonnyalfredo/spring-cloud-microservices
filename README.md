@@ -60,6 +60,15 @@ flowchart LR
 - Docker e Docker Compose
 - JUnit 5, Mockito e MockMvc
 
+## CI/CD
+
+O projeto possui GitHub Actions em [.github/workflows/ci.yml](.github/workflows/ci.yml).
+
+O pipeline roda automaticamente em `push` e `pull_request` e valida:
+
+- `mvn clean test` em `client-service`, `order-service`, `api-gateway` e `service-registry`.
+- `docker build` dos quatro servicos, sem publicar imagens.
+
 ## Como rodar com Docker
 
 Pre-requisitos:
