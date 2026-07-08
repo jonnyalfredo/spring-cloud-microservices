@@ -1,6 +1,7 @@
 package com.jonathanleite.clientapi.domain.service;
 
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
+import com.jonathanleite.clientapi.api.dto.ClientPatchRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.entity.Client;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
@@ -71,6 +72,22 @@ class ClientServiceImplTest {
                 () -> clientService.create(request));
     }
 
+    @Test
+    void shouldThrowExceptionWhenDocumentAlreadyExists() {
+        ClientRequestDTO request = ClientRequestDTO.builder()
+                .email("novo@email.com")
+                .document("12345678900")
+                .build();
+
+        when(clientRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(clientRepository.existsByDocument(request.getDocument())).thenReturn(true);
+
+        assertThrows(ConflictException.class,
+                () -> clientService.create(request));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
     /* ===============================
        FIND BY ID
        =============================== */
@@ -121,6 +138,35 @@ class ClientServiceImplTest {
 
         assertEquals(2, result.getContent().size());
         assertEquals(2, result.getTotalElements());
+    }
+
+    @Test
+    void shouldPatchOnlyProvidedFields() {
+        Client client = Client.builder()
+                .id(1L)
+                .name("Jonathan")
+                .email("jonathan@email.com")
+                .document("12345678900")
+                .phone("11999999999")
+                .active(true)
+                .build();
+
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setName("Jonathan Leite");
+        request.setPhone("11888888888");
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ClientResponseDTO response = clientService.patch(1L, request);
+
+        assertEquals("Jonathan Leite", response.getName());
+        assertEquals("11888888888", response.getPhone());
+        assertEquals("jonathan@email.com", response.getEmail());
+        assertEquals("12345678900", response.getDocument());
+        verify(clientRepository, never()).findByEmail(any());
+        verify(clientRepository, never()).findByDocument(any());
+        verify(clientRepository).save(client);
     }
 
     /* ===============================

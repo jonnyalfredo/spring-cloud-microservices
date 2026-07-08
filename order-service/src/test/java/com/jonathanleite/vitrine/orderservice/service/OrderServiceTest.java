@@ -99,6 +99,17 @@ class OrderServiceTest {
         OrderRequestDTO request = new OrderRequestDTO(1L, "Compra teste", BigDecimal.ZERO);
 
         assertThrows(BusinessException.class, () -> orderService.createOrder(request));
+        verify(clientServiceClient, never()).getClientById(any(), any());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldRejectNegativeAmount() {
+        OrderRequestDTO request = new OrderRequestDTO(1L, "Compra teste", new BigDecimal("-1.00"));
+
+        assertThrows(BusinessException.class, () -> orderService.createOrder(request));
+        verify(clientServiceClient, never()).getClientById(any(), any());
+        verify(orderRepository, never()).save(any(Order.class));
     }
 
     @Test
@@ -120,5 +131,16 @@ class OrderServiceTest {
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
         assertThrows(BusinessException.class, () -> orderService.updateStatus(10L, OrderStatus.COMPLETED));
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldRejectStatusChangeWhenOrderIsCompleted() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.COMPLETED);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        assertThrows(BusinessException.class, () -> orderService.updateStatus(10L, OrderStatus.PROCESSING));
+        verify(orderRepository, never()).save(any(Order.class));
     }
 }
