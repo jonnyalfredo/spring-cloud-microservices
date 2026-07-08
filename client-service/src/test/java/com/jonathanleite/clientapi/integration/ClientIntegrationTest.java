@@ -34,6 +34,7 @@ class ClientIntegrationTest {
 
         mockMvc.perform(
                         post("/clients")
+                                .header("X-User-Id", "test-user")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -55,6 +56,7 @@ class ClientIntegrationTest {
         // cria o primeiro
         mockMvc.perform(
                         post("/clients")
+                                .header("X-User-Id", "test-user")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -63,6 +65,7 @@ class ClientIntegrationTest {
         // tenta criar novamente
         mockMvc.perform(
                         post("/clients")
+                                .header("X-User-Id", "test-user")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -79,6 +82,7 @@ class ClientIntegrationTest {
 
         mockMvc.perform(
                         post("/clients")
+                                .header("X-User-Id", "test-user")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -95,6 +99,7 @@ class ClientIntegrationTest {
 
         String response = mockMvc.perform(
                         post("/clients")
+                                .header("X-User-Id", "test-user")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -105,16 +110,18 @@ class ClientIntegrationTest {
 
         Long id = objectMapper.readTree(response).get("id").asLong();
 
-        mockMvc.perform(get("/clients/{id}", id))
+        mockMvc.perform(get("/clients/{id}", id)
+                        .header("X-User-Id", "test-user"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id));
     }
 
     @Test
     void shouldReturnAllClients() throws Exception {
-        mockMvc.perform(get("/clients"))
+        mockMvc.perform(get("/clients")
+                        .header("X-User-Id", "test-user"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test
@@ -127,6 +134,7 @@ class ClientIntegrationTest {
 
         String response = mockMvc.perform(
                         post("/clients")
+                                .header("X-User-Id", "test-user")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -145,6 +153,7 @@ class ClientIntegrationTest {
 
         mockMvc.perform(
                         put("/clients/{id}", id)
+                                .header("X-User-Id", "test-user")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateRequest))
                 )
@@ -162,6 +171,7 @@ class ClientIntegrationTest {
 
         String response = mockMvc.perform(
                         post("/clients")
+                                .header("X-User-Id", "test-user")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -172,7 +182,8 @@ class ClientIntegrationTest {
 
         Long id = objectMapper.readTree(response).get("id").asLong();
 
-        mockMvc.perform(delete("/clients/{id}", id))
+        mockMvc.perform(delete("/clients/{id}", id)
+                        .header("X-User-Id", "test-user"))
                 .andExpect(status().isNoContent());
     }
 }

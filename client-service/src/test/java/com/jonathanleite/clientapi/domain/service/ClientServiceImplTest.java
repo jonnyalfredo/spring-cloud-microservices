@@ -1,179 +1,146 @@
 package com.jonathanleite.clientapi.domain.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jonathanleite.clientapi.api.controller.ClientController;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
+import com.jonathanleite.clientapi.domain.entity.Client;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
-import com.jonathanleite.clientapi.domain.service.ClientService;
+import com.jonathanleite.clientapi.domain.repository.ClientRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@WebMvcTest(ClientController.class)
-class ClientControllerTest {
+@ExtendWith(MockitoExtension.class)
+class ClientServiceImplTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock
+    private ClientRepository clientRepository;
 
-    @MockBean
-    private ClientService clientService;
+    @InjectMocks
+    private ClientServiceImpl clientService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    /* ---------- POST /clients ---------- */
+    /* ===============================
+       CREATE
+       =============================== */
 
     @Test
-    void shouldCreateClientSuccessfully() throws Exception {
+    void shouldCreateClientSuccessfully() {
         ClientRequestDTO request = ClientRequestDTO.builder()
-                .email("teste@email.com")
-                .document("123")
                 .name("Jonathan")
+                .email("jonathan@email.com")
+                .document("12345678900")
                 .phone("11999999999")
                 .build();
 
-        ClientResponseDTO response = ClientResponseDTO.builder()
-                .id(1L)
-                .email("teste@email.com")
-                .document("123")
-                .build();
+        when(clientRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(clientRepository.existsByDocument(request.getDocument())).thenReturn(false);
+        when(clientRepository.save(any(Client.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(clientService.create(any(ClientRequestDTO.class)))
-                .thenReturn(response);
+        ClientResponseDTO response = clientService.create(request);
 
-        mockMvc.perform(post("/clients")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.email").value("teste@email.com"));
+        assertNotNull(response);
+        assertEquals(request.getEmail(), response.getEmail());
+        verify(clientRepository).save(any(Client.class));
     }
 
     @Test
-    void shouldReturn409WhenEmailAlreadyExists() throws Exception {
+    void shouldThrowExceptionWhenEmailAlreadyExists() {
         ClientRequestDTO request = ClientRequestDTO.builder()
                 .email("duplicado@email.com")
                 .document("123")
-                .name("Jonathan")
-                .phone("11999999999")
                 .build();
 
-        when(clientService.create(any(ClientRequestDTO.class)))
-                .thenThrow(new ConflictException("Email já cadastrado"));
+        when(clientRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
-        mockMvc.perform(post("/clients")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Email já cadastrado"));
+        assertThrows(ConflictException.class,
+                () -> clientService.create(request));
     }
 
-    /* ---------- PUT /clients/{id} ---------- */
+    /* ===============================
+       FIND BY ID
+       =============================== */
 
     @Test
-    void shouldUpdateClientSuccessfully() throws Exception {
-        ClientRequestDTO request = ClientRequestDTO.builder()
-                .email("novo@email.com")
-                .document("456")
-                .name("Jonathan")
-                .phone("11999999999")
-                .build();
-
-        ClientResponseDTO response = ClientResponseDTO.builder()
+    void shouldFindClientById() {
+        Client client = Client.builder()
                 .id(1L)
-                .email("novo@email.com")
-                .document("456")
+                .name("Cliente")
                 .build();
 
-        when(clientService.update(eq(1L), any(ClientRequestDTO.class)))
-                .thenReturn(response);
+        when(clientRepository.findById(1L))
+                .thenReturn(Optional.of(client));
 
-        mockMvc.perform(put("/clients/{id}", 1L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("novo@email.com"));
-    }
+        ClientResponseDTO response = clientService.findById(1L);
 
-    /* ---------- GET /clients/{id} ---------- */
-
-    @Test
-    void shouldFindClientByIdSuccessfully() throws Exception {
-        ClientResponseDTO response = ClientResponseDTO.builder()
-                .id(1L)
-                .email("teste@email.com")
-                .document("123")
-                .build();
-
-        when(clientService.findById(1L)).thenReturn(response);
-
-        mockMvc.perform(get("/clients/{id}", 1L))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L));
+        assertEquals(1L, response.getId());
     }
 
     @Test
-    void shouldReturn404WhenClientNotFound() throws Exception {
-        when(clientService.findById(99L))
-                .thenThrow(new ResourceNotFoundException("Cliente não encontrado"));
+    void shouldThrowExceptionWhenClientNotFound() {
+        when(clientRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/clients/{id}", 99L))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Cliente não encontrado"));
+        assertThrows(ResourceNotFoundException.class,
+                () -> clientService.findById(99L));
     }
 
-    /* ---------- GET /clients (PAGINADO) ---------- */
+    /* ===============================
+       FIND ALL (FILTROS + PAGINAÇÃO)
+       =============================== */
 
     @Test
-    void shouldFindAllClientsSuccessfully() throws Exception {
+    void shouldReturnPagedClientListWithoutFilters() {
         Pageable pageable = PageRequest.of(0, 10);
 
-        Page<ClientResponseDTO> page = new PageImpl<>(
-                List.of(
-                        ClientResponseDTO.builder().id(1L).email("a@email.com").build(),
-                        ClientResponseDTO.builder().id(2L).email("b@email.com").build()
-                ),
+        Page<Client> page = new PageImpl<>(
+                List.of(new Client(), new Client()),
                 pageable,
                 2
         );
 
-        when(clientService.findAll(
-                nullable(String.class),
-                nullable(String.class),
-                any(Pageable.class)
-        )).thenReturn(page);
+        when(clientRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
 
-        mockMvc.perform(get("/clients")
-                        .param("page", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(2));
+        Page<ClientResponseDTO> result =
+                clientService.findAll(null, null, pageable);
+
+        assertEquals(2, result.getContent().size());
+        assertEquals(2, result.getTotalElements());
     }
 
-    /* ---------- DELETE /clients/{id} ---------- */
+    /* ===============================
+       DELETE
+       =============================== */
 
     @Test
-    void shouldDeleteClientSuccessfully() throws Exception {
-        doNothing().when(clientService).delete(1L);
+    void shouldDeleteClientSuccessfully() {
+        when(clientRepository.existsById(1L)).thenReturn(true);
 
-        mockMvc.perform(delete("/clients/{id}", 1L))
-                .andExpect(status().isNoContent());
+        clientService.delete(1L);
+
+        verify(clientRepository).deleteById(1L);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingNonExistingClient() {
+        when(clientRepository.existsById(1L)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> clientService.delete(1L));
     }
 }

@@ -1,7 +1,6 @@
-package com.jonathanleite.clientapi.api.controller.controller;
+package com.jonathanleite.clientapi.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jonathanleite.clientapi.api.controller.ClientController;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
@@ -59,6 +58,7 @@ class ClientControllerTest {
                 .thenReturn(response);
 
         mockMvc.perform(post("/clients")
+                        .header("X-User-Id", "test-user")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -79,6 +79,7 @@ class ClientControllerTest {
                 .thenThrow(new ConflictException("Email já cadastrado"));
 
         mockMvc.perform(post("/clients")
+                        .header("X-User-Id", "test-user")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -107,6 +108,7 @@ class ClientControllerTest {
                 .thenReturn(response);
 
         mockMvc.perform(put("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -126,7 +128,8 @@ class ClientControllerTest {
 
         when(clientService.findById(1L)).thenReturn(response);
 
-        mockMvc.perform(get("/clients/{id}", 1L))
+        mockMvc.perform(get("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L));
     }
@@ -136,7 +139,8 @@ class ClientControllerTest {
         when(clientService.findById(99L))
                 .thenThrow(new ResourceNotFoundException("Cliente não encontrado"));
 
-        mockMvc.perform(get("/clients/{id}", 99L))
+        mockMvc.perform(get("/clients/{id}", 99L)
+                        .header("X-User-Id", "test-user"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Cliente não encontrado"));
     }
@@ -163,6 +167,7 @@ class ClientControllerTest {
         )).thenReturn(page);
 
         mockMvc.perform(get("/clients")
+                        .header("X-User-Id", "test-user")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -177,7 +182,8 @@ class ClientControllerTest {
     void shouldDeleteClientSuccessfully() throws Exception {
         doNothing().when(clientService).delete(1L);
 
-        mockMvc.perform(delete("/clients/{id}", 1L))
+        mockMvc.perform(delete("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user"))
                 .andExpect(status().isNoContent());
     }
 }

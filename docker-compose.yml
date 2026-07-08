@@ -39,7 +39,7 @@ services:
       - vitrine-network
 
   client-api:
-    build: ./client-api
+    build: ./client-service
     container_name: client-api
     depends_on:
       - postgres-client
