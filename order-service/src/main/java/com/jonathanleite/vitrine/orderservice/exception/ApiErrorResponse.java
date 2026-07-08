@@ -1,4 +1,4 @@
-package com.jonathanleite.clientapi.api.exception;
+package com.jonathanleite.vitrine.orderservice.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
