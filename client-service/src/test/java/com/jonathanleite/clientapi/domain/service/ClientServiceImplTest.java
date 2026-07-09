@@ -277,19 +277,44 @@ class ClientServiceImplTest {
        =============================== */
 
     @Test
-    void shouldDeleteClientSuccessfully() {
-        when(clientRepository.existsById(1L)).thenReturn(true);
+    void shouldDeleteClientLogically() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(true)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
 
         clientService.delete(1L);
 
-        verify(clientRepository).deleteById(1L);
+        assertFalse(client.getActive());
+        verify(clientRepository).save(client);
+        verify(clientRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void shouldKeepInactiveClientWhenDeletingAgain() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(false)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+
+        clientService.delete(1L);
+
+        assertFalse(client.getActive());
+        verify(clientRepository, never()).save(any(Client.class));
+        verify(clientRepository, never()).deleteById(any());
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingNonExistingClient() {
-        when(clientRepository.existsById(1L)).thenReturn(false);
+        when(clientRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> clientService.delete(1L));
+
+        verify(clientRepository, never()).deleteById(any());
     }
 }

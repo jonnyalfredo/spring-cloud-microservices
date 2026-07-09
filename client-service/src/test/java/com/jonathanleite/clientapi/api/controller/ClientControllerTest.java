@@ -25,7 +25,6 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -423,9 +422,7 @@ class ClientControllerTest {
     }
 
     @Test
-    void shouldDeleteClientSuccessfully() throws Exception {
-        doNothing().when(clientService).delete(1L);
-
+    void shouldDeleteClientLogically() throws Exception {
         mockMvc.perform(delete("/clients/{id}", 1L)
                         .header("X-User-Id", "test-user"))
                 .andExpect(status().isNoContent());

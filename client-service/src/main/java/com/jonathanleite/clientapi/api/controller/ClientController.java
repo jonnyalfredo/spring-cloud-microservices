@@ -4,6 +4,7 @@ import com.jonathanleite.clientapi.api.dto.ClientPatchRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.service.ClientService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,7 @@ public class ClientController {
     }
 
     @PatchMapping("/{id}/activate")
+    @Operation(summary = "Ativa um cliente inativo")
     public ResponseEntity<ClientResponseDTO> activate(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") String userId) {
@@ -66,6 +68,7 @@ public class ClientController {
     }
 
     @PatchMapping("/{id}/deactivate")
+    @Operation(summary = "Inativa um cliente ativo")
     public ResponseEntity<ClientResponseDTO> deactivate(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") String userId) {
@@ -105,11 +108,12 @@ public class ClientController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Inativa logicamente um cliente")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") String userId) {
 
-        log.info("User {} deleted client {}", userId, id);
+        log.info("User {} logically deleted client {}", userId, id);
 
         clientService.delete(id);
 

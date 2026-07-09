@@ -162,7 +162,7 @@ class ClientIntegrationTest {
     }
 
     @Test
-    void shouldDeleteClientSuccessfully() throws Exception {
+    void shouldDeleteClientLogically() throws Exception {
         ClientRequestDTO request = ClientRequestDTO.builder()
                 .name("Cliente Delete")
                 .email("delete@email.com")
@@ -185,5 +185,11 @@ class ClientIntegrationTest {
         mockMvc.perform(delete("/clients/{id}", id)
                         .header("X-User-Id", "test-user"))
                 .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/clients/{id}", id)
+                        .header("X-User-Id", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.active").value(false));
     }
 }

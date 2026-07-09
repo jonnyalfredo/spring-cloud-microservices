@@ -13,7 +13,7 @@ Este serviço faz parte do projeto principal `spring-cloud-microservices`. A doc
 - Listar clientes com paginação e filtros.
 - Atualizar cliente com `PUT`.
 - Atualizar cliente parcialmente com `PATCH`.
-- Remover cliente.
+- Inativar cliente por exclusão lógica.
 - Retornar erros no formato padronizado do projeto.
 
 ## Porta
@@ -34,7 +34,7 @@ Este serviço faz parte do projeto principal `spring-cloud-microservices`. A doc
 | `PATCH` | `/clients/{id}` | Atualizar parcialmente |
 | `PATCH` | `/clients/{id}/activate` | Ativar cliente |
 | `PATCH` | `/clients/{id}/deactivate` | Inativar cliente |
-| `DELETE` | `/clients/{id}` | Remover cliente |
+| `DELETE` | `/clients/{id}` | Inativar cliente por exclusão lógica |
 
 Rotas privadas acessadas diretamente exigem o header:
 
