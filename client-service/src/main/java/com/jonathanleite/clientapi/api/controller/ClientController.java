@@ -95,15 +95,17 @@ public class ClientController {
 
     @GetMapping
     public ResponseEntity<Page<ClientResponseDTO>> findAll(
+            @RequestParam(required = false) String name,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String document,
+            @RequestParam(required = false) Boolean active,
             Pageable pageable,
             @RequestHeader("X-User-Id") String userId) {
 
         log.info("User {} requested client list", userId);
 
         return ResponseEntity.ok(
-                clientService.findAll(email, document, pageable)
+                clientService.findAll(name, email, document, active, pageable)
         );
     }
 

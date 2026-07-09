@@ -25,6 +25,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -409,16 +410,30 @@ class ClientControllerTest {
         when(clientService.findAll(
                 nullable(String.class),
                 nullable(String.class),
+                nullable(String.class),
+                nullable(Boolean.class),
                 any(Pageable.class)
         )).thenReturn(page);
 
         mockMvc.perform(get("/clients")
                         .header("X-User-Id", "test-user")
+                        .param("name", "Cliente")
+                        .param("email", "a@email.com")
+                        .param("document", "12345678900")
+                        .param("active", "true")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.totalElements").value(2));
+
+        verify(clientService).findAll(
+                eq("Cliente"),
+                eq("a@email.com"),
+                eq("12345678900"),
+                eq(true),
+                any(Pageable.class)
+        );
     }
 
     @Test

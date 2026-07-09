@@ -14,9 +14,28 @@ public class ClientSpecification {
                         criteriaBuilder.equal(root.get("email"), email);
     }
 
+    public static Specification<Client> hasName(String name) {
+        return (root, query, criteriaBuilder) -> {
+            if (name == null || name.isBlank()) {
+                return null;
+            }
+
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("name")),
+                    "%" + name.toLowerCase() + "%"
+            );
+        };
+    }
+
     public static Specification<Client> hasDocument(String document) {
         return (root, query, criteriaBuilder) ->
                 document == null ? null :
                         criteriaBuilder.equal(root.get("document"), document);
+    }
+
+    public static Specification<Client> hasActive(Boolean active) {
+        return (root, query, criteriaBuilder) ->
+                active == null ? null :
+                        criteriaBuilder.equal(root.get("active"), active);
     }
 }

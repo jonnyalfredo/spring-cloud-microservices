@@ -36,6 +36,21 @@ Este serviço faz parte do projeto principal `spring-cloud-microservices`. A doc
 | `PATCH` | `/clients/{id}/deactivate` | Inativar cliente |
 | `DELETE` | `/clients/{id}` | Inativar cliente por exclusão lógica |
 
+## Filtros de listagem
+
+`GET /clients` aceita filtros combinados com paginação:
+
+```text
+GET /clients?name=maria&email=maria@email.com&document=12345678900&active=true&page=0&size=10
+```
+
+Filtros disponíveis:
+
+- `name`: busca parcial, sem diferenciar maiúsculas e minúsculas.
+- `email`: busca exata.
+- `document`: busca exata.
+- `active`: `true` ou `false`.
+
 Rotas privadas acessadas diretamente exigem o header:
 
 ```text

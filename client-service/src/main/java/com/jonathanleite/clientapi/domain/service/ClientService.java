@@ -20,7 +20,7 @@ public interface ClientService {
 
     ClientResponseDTO findById(Long id);
 
-    Page<ClientResponseDTO> findAll(String email, String document, Pageable pageable);
+    Page<ClientResponseDTO> findAll(String name, String email, String document, Boolean active, Pageable pageable);
 
     void delete(Long id);
 }

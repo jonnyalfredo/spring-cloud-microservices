@@ -135,7 +135,7 @@ class ClientServiceImplTest {
                 .thenReturn(page);
 
         Page<ClientResponseDTO> result =
-                clientService.findAll(null, null, pageable);
+                clientService.findAll(null, null, null, null, pageable);
 
         assertEquals(2, result.getContent().size());
         assertEquals(2, result.getTotalElements());

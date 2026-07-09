@@ -69,13 +69,17 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Page<ClientResponseDTO> findAll(
+            String name,
             String email,
             String document,
+            Boolean active,
             Pageable pageable) {
 
         Specification<Client> specification = Specification
-                .where(ClientSpecification.hasEmail(email))
-                .and(ClientSpecification.hasDocument(document));
+                .where(ClientSpecification.hasName(name))
+                .and(ClientSpecification.hasEmail(email))
+                .and(ClientSpecification.hasDocument(document))
+                .and(ClientSpecification.hasActive(active));
 
         return clientRepository.findAll(specification, pageable)
                 .map(this::toResponseDTO);
