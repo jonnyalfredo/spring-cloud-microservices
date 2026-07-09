@@ -29,6 +29,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -171,6 +172,85 @@ class ClientControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("novo@email.com"));
+    }
+
+    @Test
+    void shouldPatchClientSuccessfully() throws Exception {
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
+                .name("Jonathan Leite")
+                .email("teste@email.com")
+                .document("12345678900")
+                .phone("11888888888")
+                .build();
+
+        when(clientService.patch(eq(1L), any())).thenReturn(response);
+
+        mockMvc.perform(patch("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Jonathan Leite",
+                                  "phone": "11888888888"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Jonathan Leite"))
+                .andExpect(jsonPath("$.phone").value("11888888888"))
+                .andExpect(jsonPath("$.email").value("teste@email.com"))
+                .andExpect(jsonPath("$.document").value("12345678900"));
+    }
+
+    @Test
+    void shouldReturn400WhenPatchEmailIsInvalid() throws Exception {
+        mockMvc.perform(patch("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-patch-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "email-invalido"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-patch-email"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
+                .andExpect(jsonPath("$.errors[0].field").value("email"));
+    }
+
+    @Test
+    void shouldReturn400WhenPatchFieldIsBlank() throws Exception {
+        mockMvc.perform(patch("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-patch-blank")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": " "
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-patch-blank"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
+                .andExpect(jsonPath("$.errors[0].field").value("name"));
+    }
+
+    @Test
+    void shouldReturn400WhenPatchDocumentIsInvalid() throws Exception {
+        mockMvc.perform(patch("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-patch-document")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "document": "123"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-patch-document"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
+                .andExpect(jsonPath("$.errors[0].field").value("document"));
     }
 
     @Test

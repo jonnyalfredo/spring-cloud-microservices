@@ -47,7 +47,7 @@ public class ClientController {
     @PatchMapping("/{id}")
     public ResponseEntity<ClientResponseDTO> patch(
             @PathVariable Long id,
-            @RequestBody ClientPatchRequestDTO request,
+            @Valid @RequestBody ClientPatchRequestDTO request,
             @RequestHeader("X-User-Id") String userId) {
 
         log.info("User {} patched client {}", userId, id);

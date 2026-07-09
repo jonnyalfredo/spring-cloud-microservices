@@ -7,6 +7,7 @@ import com.jonathanleite.clientapi.domain.entity.Client;
 import com.jonathanleite.clientapi.domain.exception.BusinessException;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
+import com.jonathanleite.clientapi.domain.exception.ValidationException;
 import com.jonathanleite.clientapi.domain.repository.ClientRepository;
 import com.jonathanleite.clientapi.domain.repository.specification.ClientSpecification;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.regex.Pattern;
+
 @Service
 @RequiredArgsConstructor
 public class ClientServiceImpl implements ClientService {
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern DOCUMENT_PATTERN = Pattern.compile("\\d{11}|\\d{14}");
 
     private final ClientRepository clientRepository;
 
@@ -118,6 +124,8 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ClientResponseDTO patch(Long id, ClientPatchRequestDTO request) {
 
+        validatePatchRequest(request);
+
         Client client = clientRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Cliente não encontrado"));
@@ -152,6 +160,27 @@ public class ClientServiceImpl implements ClientService {
         return toResponseDTO(clientRepository.save(client));
     }
 
+
+    private void validatePatchRequest(ClientPatchRequestDTO request) {
+        validateOptionalText("Nome", request.getName());
+        validateOptionalText("Email", request.getEmail());
+        validateOptionalText("Documento", request.getDocument());
+        validateOptionalText("Telefone", request.getPhone());
+
+        if (request.getEmail() != null && !EMAIL_PATTERN.matcher(request.getEmail()).matches()) {
+            throw new ValidationException("Email inválido");
+        }
+
+        if (request.getDocument() != null && !DOCUMENT_PATTERN.matcher(request.getDocument()).matches()) {
+            throw new ValidationException("Documento deve conter 11 ou 14 dígitos");
+        }
+    }
+
+    private void validateOptionalText(String fieldName, String value) {
+        if (value != null && value.isBlank()) {
+            throw new ValidationException(fieldName + " não pode ser vazio");
+        }
+    }
 
     private ClientResponseDTO toResponseDTO(Client client) {
 

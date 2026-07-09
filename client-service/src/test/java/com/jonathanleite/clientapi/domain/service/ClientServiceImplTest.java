@@ -6,6 +6,7 @@ import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.entity.Client;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
+import com.jonathanleite.clientapi.domain.exception.ValidationException;
 import com.jonathanleite.clientapi.domain.repository.ClientRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -167,6 +168,42 @@ class ClientServiceImplTest {
         verify(clientRepository, never()).findByEmail(any());
         verify(clientRepository, never()).findByDocument(any());
         verify(clientRepository).save(client);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPatchNameIsBlank() {
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setName(" ");
+
+        assertThrows(ValidationException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).findById(any());
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPatchEmailIsInvalid() {
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setEmail("email-invalido");
+
+        assertThrows(ValidationException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).findById(any());
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPatchDocumentIsInvalid() {
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setDocument("123");
+
+        assertThrows(ValidationException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).findById(any());
+        verify(clientRepository, never()).save(any(Client.class));
     }
 
     /* ===============================
