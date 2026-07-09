@@ -161,7 +161,7 @@ class OrderControllerErrorHandlingTest {
     @Test
     void shouldReturn409WhenOrderStatusConflictHappens() throws Exception {
         when(orderService.updateStatus(1L, com.jonathanleite.vitrine.orderservice.entity.OrderStatus.COMPLETED))
-                .thenThrow(new OrderStatusConflictException("Pedido deve passar por PROCESSING antes de COMPLETED"));
+                .thenThrow(new OrderStatusConflictException("Transição inválida de CREATED para COMPLETED"));
 
         mockMvc.perform(patch("/orders/{id}/status", 1L)
                         .param("status", "COMPLETED")
@@ -170,7 +170,7 @@ class OrderControllerErrorHandlingTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-order-status-409"))
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.message").value("Pedido deve passar por PROCESSING antes de COMPLETED"))
+                .andExpect(jsonPath("$.message").value("Transição inválida de CREATED para COMPLETED"))
                 .andExpect(jsonPath("$.path").value("/orders/1/status"))
                 .andExpect(jsonPath("$.correlationId").value("corr-order-status-409"));
     }

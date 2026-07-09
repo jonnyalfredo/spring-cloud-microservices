@@ -126,15 +126,56 @@ class OrderServiceTest {
         order.prePersist();
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
-            Order savedOrder = invocation.getArgument(0);
-            savedOrder.preUpdate();
-            return savedOrder;
-        });
+        mockSaveUpdatingTimestamp();
 
         OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.PROCESSING);
 
         assertEquals(OrderStatus.PROCESSING, response.getStatus());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
+    }
+
+    @Test
+    void shouldUpdateStatusFromProcessingToCompleted() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.PROCESSING);
+        order.prePersist();
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        mockSaveUpdatingTimestamp();
+
+        OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.COMPLETED);
+
+        assertEquals(OrderStatus.COMPLETED, response.getStatus());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
+    }
+
+    @Test
+    void shouldUpdateStatusFromCreatedToCancelled() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.CREATED);
+        order.prePersist();
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        mockSaveUpdatingTimestamp();
+
+        OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.CANCELLED);
+
+        assertEquals(OrderStatus.CANCELLED, response.getStatus());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
+    }
+
+    @Test
+    void shouldUpdateStatusFromProcessingToCancelled() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.PROCESSING);
+        order.prePersist();
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        mockSaveUpdatingTimestamp();
+
+        OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.CANCELLED);
+
+        assertEquals(OrderStatus.CANCELLED, response.getStatus());
         assertNotNull(response.getCreatedAt());
         assertNotNull(response.getUpdatedAt());
     }
@@ -150,7 +191,7 @@ class OrderServiceTest {
                 () -> orderService.updateStatus(10L, OrderStatus.COMPLETED)
         );
 
-        assertEquals("Pedido deve passar por PROCESSING antes de COMPLETED", exception.getMessage());
+        assertEquals("Transição inválida de CREATED para COMPLETED", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
     }
 
@@ -197,5 +238,13 @@ class OrderServiceTest {
 
         assertEquals("Pedido já está com esse status", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    private void mockSaveUpdatingTimestamp() {
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order savedOrder = invocation.getArgument(0);
+            savedOrder.preUpdate();
+            return savedOrder;
+        });
     }
 }

@@ -49,8 +49,16 @@ Este serviço faz parte do projeto principal `spring-cloud-microservices`. A doc
 ## Regras de status
 
 - Status inicial: `CREATED`.
-- `CREATED` não pode ir direto para `COMPLETED`.
-- Pedidos `COMPLETED` ou `CANCELLED` não podem ser alterados.
+- Transições permitidas:
+  - `CREATED` -> `PROCESSING`
+  - `PROCESSING` -> `COMPLETED`
+  - `CREATED` -> `CANCELLED`
+  - `PROCESSING` -> `CANCELLED`
+- Transições bloqueadas:
+  - `CREATED` -> `COMPLETED`
+  - alterar pedido `COMPLETED`
+  - alterar pedido `CANCELLED`
+  - aplicar o mesmo status novamente
 
 ## Rodar testes
 

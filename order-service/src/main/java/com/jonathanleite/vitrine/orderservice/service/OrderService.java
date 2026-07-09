@@ -18,10 +18,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+
 @Service
 public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+    private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_STATUS_TRANSITIONS = Map.of(
+            OrderStatus.CREATED, EnumSet.of(OrderStatus.PROCESSING, OrderStatus.CANCELLED),
+            OrderStatus.PROCESSING, EnumSet.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED),
+            OrderStatus.COMPLETED, EnumSet.noneOf(OrderStatus.class),
+            OrderStatus.CANCELLED, EnumSet.noneOf(OrderStatus.class)
+    );
 
     private final OrderRepository orderRepository;
     private final ClientServiceClient clientServiceClient;
@@ -157,9 +167,9 @@ public class OrderService {
             throw new OrderStatusConflictException("Pedido cancelado não pode ser alterado");
         }
 
-        if (current == OrderStatus.CREATED && next == OrderStatus.COMPLETED) {
+        if (!ALLOWED_STATUS_TRANSITIONS.getOrDefault(current, Set.of()).contains(next)) {
             log.warn("Transição inválida de {} para {}", current, next);
-            throw new OrderStatusConflictException("Pedido deve passar por PROCESSING antes de COMPLETED");
+            throw new OrderStatusConflictException("Transição inválida de " + current + " para " + next);
         }
     }
 
