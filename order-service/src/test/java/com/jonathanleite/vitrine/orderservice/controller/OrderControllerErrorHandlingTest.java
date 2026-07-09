@@ -51,7 +51,7 @@ class OrderControllerErrorHandlingTest {
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Erro de validacao"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
                 .andExpect(jsonPath("$.path").value("/orders"))
                 .andExpect(jsonPath("$.correlationId").value("corr-order-validation"))
                 .andExpect(jsonPath("$.errors").isArray())
@@ -64,7 +64,7 @@ class OrderControllerErrorHandlingTest {
         OrderRequestDTO request = new OrderRequestDTO(1L, "Compra teste", BigDecimal.TEN);
 
         when(orderService.createOrder(any(OrderRequestDTO.class)))
-                .thenThrow(new BusinessException("Cliente esta inativo"));
+                .thenThrow(new BusinessException("Cliente está inativo"));
 
         mockMvc.perform(post("/orders")
                         .header("X-Correlation-Id", "corr-order-400")
@@ -74,7 +74,7 @@ class OrderControllerErrorHandlingTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-order-400"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Cliente esta inativo"))
+                .andExpect(jsonPath("$.message").value("Cliente está inativo"))
                 .andExpect(jsonPath("$.path").value("/orders"))
                 .andExpect(jsonPath("$.correlationId").value("corr-order-400"));
     }
@@ -87,7 +87,7 @@ class OrderControllerErrorHandlingTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-order-param"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Parametro obrigatorio ausente: status"))
+                .andExpect(jsonPath("$.message").value("Parâmetro obrigatório ausente: status"))
                 .andExpect(jsonPath("$.path").value("/orders/1/status"))
                 .andExpect(jsonPath("$.correlationId").value("corr-order-param"));
     }
@@ -95,7 +95,7 @@ class OrderControllerErrorHandlingTest {
     @Test
     void shouldReturn404WhenOrderIsNotFound() throws Exception {
         when(orderService.getOrderById(99L))
-                .thenThrow(new ResourceNotFoundException("Pedido nao encontrado"));
+                .thenThrow(new ResourceNotFoundException("Pedido não encontrado"));
 
         mockMvc.perform(get("/orders/{id}", 99L)
                         .header("X-Correlation-Id", "corr-order-404"))
@@ -103,7 +103,7 @@ class OrderControllerErrorHandlingTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-order-404"))
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Pedido nao encontrado"))
+                .andExpect(jsonPath("$.message").value("Pedido não encontrado"))
                 .andExpect(jsonPath("$.path").value("/orders/99"))
                 .andExpect(jsonPath("$.correlationId").value("corr-order-404"));
     }
@@ -130,7 +130,7 @@ class OrderControllerErrorHandlingTest {
 
     @Test
     void shouldReturn401WhenUnauthorized() throws Exception {
-        when(orderService.getOrderById(1L)).thenThrow(new UnauthorizedException("Nao autorizado"));
+        when(orderService.getOrderById(1L)).thenThrow(new UnauthorizedException("Não autorizado"));
 
         mockMvc.perform(get("/orders/{id}", 1L)
                         .header("X-Correlation-Id", "corr-order-401"))
@@ -138,7 +138,7 @@ class OrderControllerErrorHandlingTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-order-401"))
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.error").value("Unauthorized"))
-                .andExpect(jsonPath("$.message").value("Nao autorizado"))
+                .andExpect(jsonPath("$.message").value("Não autorizado"))
                 .andExpect(jsonPath("$.path").value("/orders/1"))
                 .andExpect(jsonPath("$.correlationId").value("corr-order-401"));
     }

@@ -1,6 +1,14 @@
 package com.jonathanleite.vitrine.orderservice.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,11 +38,9 @@ public class Order {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // Construtor padrão (JPA)
     public Order() {
     }
 
-    // Construtor com parâmetros
     public Order(Long clientId, String description, BigDecimal amount, OrderStatus status) {
         this.clientId = clientId;
         this.description = description;
@@ -42,13 +48,11 @@ public class Order {
         this.status = status;
     }
 
-    // Método para setar data automaticamente
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -89,12 +93,14 @@ public class Order {
         return createdAt;
     }
 
-    // equals e hashCode (baseado no id)
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Order)) return false;
-        Order order = (Order) o;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Order order)) {
+            return false;
+        }
         return Objects.equals(id, order.id);
     }
 

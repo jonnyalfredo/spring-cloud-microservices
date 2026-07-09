@@ -71,7 +71,7 @@ public class GlobalExceptionHandler {
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
-                "Erro de validacao",
+                "Erro de validação",
                 request,
                 fieldErrors
         );
@@ -84,7 +84,7 @@ public class GlobalExceptionHandler {
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
-                "Parametro obrigatorio ausente: " + ex.getParameterName(),
+                "Parâmetro obrigatório ausente: " + ex.getParameterName(),
                 request
         );
     }
@@ -94,7 +94,7 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Corpo da requisicao invalido", request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido", request);
     }
 
     @ExceptionHandler(Exception.class)

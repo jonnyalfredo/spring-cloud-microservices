@@ -39,7 +39,7 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderResponseDTO> createOrder(@Valid @RequestBody OrderRequestDTO request) {
-        log.info("Recebida requisicao para criar pedido clientId={}", request.getClientId());
+        log.info("Recebida requisição para criar pedido clientId={}", request.getClientId());
 
         OrderResponseDTO response = orderService.createOrder(request);
 

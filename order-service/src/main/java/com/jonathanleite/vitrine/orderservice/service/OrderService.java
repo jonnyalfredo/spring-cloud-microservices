@@ -1,23 +1,21 @@
 package com.jonathanleite.vitrine.orderservice.service;
 
-import com.jonathanleite.vitrine.orderservice.entity.Order;
-import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
+import com.jonathanleite.vitrine.orderservice.client.ClientServiceClient;
 import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
-import com.jonathanleite.vitrine.orderservice.repository.OrderRepository;
-import com.jonathanleite.vitrine.orderservice.client.ClientServiceClient;
+import com.jonathanleite.vitrine.orderservice.entity.Order;
+import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
 import com.jonathanleite.vitrine.orderservice.exception.ResourceNotFoundException;
-
+import com.jonathanleite.vitrine.orderservice.repository.OrderRepository;
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 
 @Service
 public class OrderService {
@@ -33,23 +31,14 @@ public class OrderService {
         this.clientServiceClient = clientServiceClient;
     }
 
-    // =========================================================
-    // ✅ CRIAR PEDIDO
-    // =========================================================
     public OrderResponseDTO createOrder(OrderRequestDTO request) {
-
         log.info("Iniciando criação de pedido para clientId={}", request.getClientId());
 
-        // 1. Validação básica
         validateRequest(request);
 
-        // 2. Buscar cliente (Feign)
         ClientResponseDTO client = getClient(request.getClientId());
-
-        // 3. Validar cliente
         validateClient(client);
 
-        // 4. Criar pedido
         Order order = new Order(
                 request.getClientId(),
                 request.getDescription(),
@@ -67,11 +56,7 @@ public class OrderService {
         return mapToResponse(savedOrder);
     }
 
-    // =========================================================
-    // 🔍 BUSCAR POR ID
-    // =========================================================
     public OrderResponseDTO getOrderById(Long id) {
-
         log.info("Buscando pedido id={}", id);
 
         Order order = orderRepository.findById(id)
@@ -83,11 +68,7 @@ public class OrderService {
         return mapToResponse(order);
     }
 
-    // =========================================================
-    // 📋 LISTAR TODOS (COM PAGINAÇÃO)
-    // =========================================================
     public Page<OrderResponseDTO> getAllOrders(Pageable pageable) {
-
         log.info("Listando pedidos page={} size={}",
                 pageable.getPageNumber(),
                 pageable.getPageSize());
@@ -96,17 +77,12 @@ public class OrderService {
                 .map(this::mapToResponse);
     }
 
-    // =========================================================
-    // 🔄 ATUALIZAR STATUS
-    // =========================================================
     public OrderResponseDTO updateStatus(Long id, OrderStatus newStatus) {
-
         log.info("Atualizando status do pedido id={} para {}", id, newStatus);
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado"));
 
-        // evita update desnecessário
         if (order.getStatus() == newStatus) {
             throw new BusinessException("Pedido já está com esse status");
         }
@@ -127,10 +103,6 @@ public class OrderService {
         return mapToResponse(updatedOrder);
     }
 
-    // =========================================================
-    // 🔥 MÉTODOS PRIVADOS (REGRAS)
-    // =========================================================
-
     private ClientResponseDTO getClient(Long clientId) {
         try {
             return clientServiceClient.getClientById(clientId, ClientServiceClient.SERVICE_USER_ID);
@@ -150,7 +122,6 @@ public class OrderService {
     }
 
     private void validateClient(ClientResponseDTO client) {
-
         if (client == null) {
             throw new ResourceNotFoundException("Cliente não encontrado", "CLIENT_NOT_FOUND");
         }
@@ -161,7 +132,6 @@ public class OrderService {
     }
 
     private void validateRequest(OrderRequestDTO request) {
-
         if (request.getClientId() == null) {
             throw new BusinessException("ClientId é obrigatório");
         }
@@ -175,9 +145,7 @@ public class OrderService {
         }
     }
 
-    // REGRA DE TRANSIÇÃO DE STATUS
     private void validateStatusTransition(OrderStatus current, OrderStatus next) {
-
         if (current == OrderStatus.COMPLETED || current == OrderStatus.CANCELLED) {
             log.warn("Tentativa inválida de alteração de pedido finalizado status={}", current);
             throw new BusinessException("Pedido já finalizado não pode ser alterado");
@@ -189,9 +157,6 @@ public class OrderService {
         }
     }
 
-    // =========================================================
-    // 🔄 MAPPER
-    // =========================================================
     private OrderResponseDTO mapToResponse(Order order) {
         return new OrderResponseDTO(
                 order.getId(),

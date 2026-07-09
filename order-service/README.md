@@ -1,8 +1,8 @@
 # Order Service
 
-Microservico responsavel pela criacao e gerenciamento de pedidos.
+Microsserviço responsável pela criação e gerenciamento de pedidos.
 
-Este servico faz parte do projeto principal `spring-cloud-microservices`. A documentacao completa de arquitetura, Docker, variaveis de ambiente e exemplos de requisicoes esta no [README da raiz](../README.md).
+Este serviço faz parte do projeto principal `spring-cloud-microservices`. A documentação completa de arquitetura, Docker, variáveis de ambiente e exemplos de requisições está no [README da raiz](../README.md).
 
 ## Responsabilidades
 
@@ -11,8 +11,8 @@ Este servico faz parte do projeto principal `spring-cloud-microservices`. A docu
 - Bloquear pedido para cliente inexistente.
 - Bloquear pedido para cliente inativo.
 - Bloquear valor menor ou igual a zero.
-- Controlar transicoes de status.
-- Bloquear alteracao de pedido finalizado.
+- Controlar transições de status.
+- Bloquear alteração de pedido finalizado.
 - Retornar erros no formato padronizado do projeto.
 
 ## Porta
@@ -23,9 +23,9 @@ Este servico faz parte do projeto principal `spring-cloud-microservices`. A docu
 
 ## Endpoints principais
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 | --- | --- | --- |
-| `GET` | `/orders/public/test` | Rota publica de teste |
+| `GET` | `/orders/public/test` | Rota pública de teste |
 | `POST` | `/orders` | Criar pedido |
 | `GET` | `/orders/{id}` | Buscar pedido |
 | `GET` | `/orders?page=0&size=10` | Listar pedidos |
@@ -34,8 +34,8 @@ Este servico faz parte do projeto principal `spring-cloud-microservices`. A docu
 ## Regras de status
 
 - Status inicial: `CREATED`.
-- `CREATED` nao pode ir direto para `COMPLETED`.
-- Pedidos `COMPLETED` ou `CANCELLED` nao podem ser alterados.
+- `CREATED` não pode ir direto para `COMPLETED`.
+- Pedidos `COMPLETED` ou `CANCELLED` não podem ser alterados.
 
 ## Rodar testes
 
