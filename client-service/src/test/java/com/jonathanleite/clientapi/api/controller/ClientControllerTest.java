@@ -91,7 +91,7 @@ class ClientControllerTest {
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Erro de validacao"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
                 .andExpect(jsonPath("$.path").value("/clients"))
                 .andExpect(jsonPath("$.correlationId").value("corr-client-validation"))
                 .andExpect(jsonPath("$.errors").isArray())
@@ -116,7 +116,7 @@ class ClientControllerTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-client-header"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Header obrigatorio ausente: X-User-Id"))
+                .andExpect(jsonPath("$.message").value("Header obrigatório ausente: X-User-Id"))
                 .andExpect(jsonPath("$.path").value("/clients"))
                 .andExpect(jsonPath("$.correlationId").value("corr-client-header"));
     }
@@ -131,7 +131,7 @@ class ClientControllerTest {
                 .build();
 
         when(clientService.create(any(ClientRequestDTO.class)))
-                .thenThrow(new ConflictException("Email ja cadastrado"));
+                .thenThrow(new ConflictException("Email já cadastrado"));
 
         mockMvc.perform(post("/clients")
                         .header("X-User-Id", "test-user")
@@ -143,7 +143,7 @@ class ClientControllerTest {
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.message").value("Email ja cadastrado"))
+                .andExpect(jsonPath("$.message").value("Email já cadastrado"))
                 .andExpect(jsonPath("$.path").value("/clients"))
                 .andExpect(jsonPath("$.correlationId").value("corr-client-409"));
     }
@@ -192,7 +192,7 @@ class ClientControllerTest {
     @Test
     void shouldReturn404WhenClientNotFound() throws Exception {
         when(clientService.findById(99L))
-                .thenThrow(new ResourceNotFoundException("Cliente nao encontrado"));
+                .thenThrow(new ResourceNotFoundException("Cliente não encontrado"));
 
         mockMvc.perform(get("/clients/{id}", 99L)
                         .header("X-User-Id", "test-user")
@@ -201,7 +201,7 @@ class ClientControllerTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-client-404"))
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Cliente nao encontrado"))
+                .andExpect(jsonPath("$.message").value("Cliente não encontrado"))
                 .andExpect(jsonPath("$.path").value("/clients/99"))
                 .andExpect(jsonPath("$.correlationId").value("corr-client-404"));
     }

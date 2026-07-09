@@ -1,8 +1,8 @@
 # Client Service
 
-Microservico responsavel pelo cadastro e gerenciamento de clientes.
+Microsserviço responsável pelo cadastro e gerenciamento de clientes.
 
-Este servico faz parte do projeto principal `spring-cloud-microservices`. A documentacao completa de arquitetura, Docker, variaveis de ambiente e exemplos de requisicoes esta no [README da raiz](../README.md).
+Este serviço faz parte do projeto principal `spring-cloud-microservices`. A documentação completa de arquitetura, Docker, variáveis de ambiente e exemplos de requisições está no [README da raiz](../README.md).
 
 ## Responsabilidades
 
@@ -10,7 +10,7 @@ Este servico faz parte do projeto principal `spring-cloud-microservices`. A docu
 - Bloquear email duplicado.
 - Bloquear documento duplicado.
 - Buscar cliente por ID.
-- Listar clientes com paginacao e filtros.
+- Listar clientes com paginação e filtros.
 - Atualizar cliente com `PUT`.
 - Atualizar cliente parcialmente com `PATCH`.
 - Remover cliente.
@@ -24,9 +24,9 @@ Este servico faz parte do projeto principal `spring-cloud-microservices`. A docu
 
 ## Endpoints principais
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 | --- | --- | --- |
-| `GET` | `/clients/public/test` | Rota publica de teste |
+| `GET` | `/clients/public/test` | Rota pública de teste |
 | `POST` | `/clients` | Criar cliente |
 | `GET` | `/clients/{id}` | Buscar cliente |
 | `GET` | `/clients?page=0&size=10` | Listar clientes |
