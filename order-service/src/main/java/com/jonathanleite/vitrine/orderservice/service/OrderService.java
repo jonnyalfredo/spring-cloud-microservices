@@ -169,7 +169,9 @@ public class OrderService {
                 order.getClientId(),
                 order.getDescription(),
                 order.getAmount(),
-                order.getStatus()
+                order.getStatus(),
+                order.getCreatedAt(),
+                order.getUpdatedAt()
         );
     }
 }

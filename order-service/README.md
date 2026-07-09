@@ -14,6 +14,7 @@ Este serviço faz parte do projeto principal `spring-cloud-microservices`. A doc
 - Controlar transições de status.
 - Bloquear alteração de pedido finalizado.
 - Retornar erros no formato padronizado do projeto.
+- Retornar datas de criação e atualização para rastreabilidade.
 
 ## Porta
 
@@ -30,6 +31,20 @@ Este serviço faz parte do projeto principal `spring-cloud-microservices`. A doc
 | `GET` | `/orders/{id}` | Buscar pedido |
 | `GET` | `/orders?page=0&size=10` | Listar pedidos |
 | `PATCH` | `/orders/{id}/status?status=PROCESSING` | Atualizar status |
+
+## Exemplo de resposta
+
+```json
+{
+  "id": 1,
+  "clientId": 10,
+  "description": "Compra de notebook",
+  "amount": 3500.00,
+  "status": "CREATED",
+  "createdAt": "2026-07-09T16:30:00",
+  "updatedAt": "2026-07-09T16:30:00"
+}
+```
 
 ## Regras de status
 

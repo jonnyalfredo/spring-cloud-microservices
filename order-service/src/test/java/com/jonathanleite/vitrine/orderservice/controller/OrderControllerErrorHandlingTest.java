@@ -2,6 +2,8 @@ package com.jonathanleite.vitrine.orderservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
+import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
+import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
 import com.jonathanleite.vitrine.orderservice.exception.ConflictException;
 import com.jonathanleite.vitrine.orderservice.exception.ForbiddenException;
@@ -17,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -38,6 +41,32 @@ class OrderControllerErrorHandlingTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Test
+    void shouldReturnCreatedAndUpdatedDatesWhenOrderIsCreated() throws Exception {
+        OrderRequestDTO request = new OrderRequestDTO(1L, "Compra teste", BigDecimal.TEN);
+        OrderResponseDTO response = new OrderResponseDTO(
+                10L,
+                1L,
+                "Compra teste",
+                BigDecimal.TEN,
+                OrderStatus.CREATED,
+                LocalDateTime.of(2026, 7, 9, 16, 30),
+                LocalDateTime.of(2026, 7, 9, 16, 30)
+        );
+
+        when(orderService.createOrder(any(OrderRequestDTO.class))).thenReturn(response);
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.clientId").value(1))
+                .andExpect(jsonPath("$.status").value("CREATED"))
+                .andExpect(jsonPath("$.createdAt").value("2026-07-09T16:30:00"))
+                .andExpect(jsonPath("$.updatedAt").value("2026-07-09T16:30:00"));
+    }
 
     @Test
     void shouldReturn400WithFieldErrorsWhenRequestIsInvalid() throws Exception {

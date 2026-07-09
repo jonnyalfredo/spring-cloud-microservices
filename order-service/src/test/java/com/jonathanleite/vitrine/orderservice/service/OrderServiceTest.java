@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,13 +46,19 @@ class OrderServiceTest {
         ClientResponseDTO client = new ClientResponseDTO(1L, "Jonathan", "jonathan@email.com", true);
 
         when(clientServiceClient.getClientById(1L, ClientServiceClient.SERVICE_USER_ID)).thenReturn(client);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order order = invocation.getArgument(0);
+            order.prePersist();
+            return order;
+        });
 
         OrderResponseDTO response = orderService.createOrder(request);
 
         assertEquals(1L, response.getClientId());
         assertEquals(OrderStatus.CREATED, response.getStatus());
         assertEquals(BigDecimal.TEN, response.getAmount());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
         verify(orderRepository).save(any(Order.class));
         verify(clientServiceClient).getClientById(1L, ClientServiceClient.SERVICE_USER_ID);
     }
@@ -116,13 +123,20 @@ class OrderServiceTest {
     @Test
     void shouldUpdateStatusFromCreatedToProcessing() {
         Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.CREATED);
+        order.prePersist();
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order savedOrder = invocation.getArgument(0);
+            savedOrder.preUpdate();
+            return savedOrder;
+        });
 
         OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.PROCESSING);
 
         assertEquals(OrderStatus.PROCESSING, response.getStatus());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
     }
 
     @Test
