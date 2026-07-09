@@ -7,6 +7,7 @@ import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
 import com.jonathanleite.vitrine.orderservice.entity.Order;
 import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
+import com.jonathanleite.vitrine.orderservice.exception.OrderStatusConflictException;
 import com.jonathanleite.vitrine.orderservice.exception.ResourceNotFoundException;
 import com.jonathanleite.vitrine.orderservice.repository.OrderRepository;
 import feign.FeignException;
@@ -84,7 +85,7 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado"));
 
         if (order.getStatus() == newStatus) {
-            throw new BusinessException("Pedido já está com esse status");
+            throw new OrderStatusConflictException("Pedido já está com esse status");
         }
 
         validateStatusTransition(order.getStatus(), newStatus);
@@ -146,14 +147,19 @@ public class OrderService {
     }
 
     private void validateStatusTransition(OrderStatus current, OrderStatus next) {
-        if (current == OrderStatus.COMPLETED || current == OrderStatus.CANCELLED) {
+        if (current == OrderStatus.COMPLETED) {
             log.warn("Tentativa inválida de alteração de pedido finalizado status={}", current);
-            throw new BusinessException("Pedido já finalizado não pode ser alterado");
+            throw new OrderStatusConflictException("Pedido já finalizado não pode ser alterado");
+        }
+
+        if (current == OrderStatus.CANCELLED) {
+            log.warn("Tentativa inválida de alteração de pedido cancelado status={}", current);
+            throw new OrderStatusConflictException("Pedido cancelado não pode ser alterado");
         }
 
         if (current == OrderStatus.CREATED && next == OrderStatus.COMPLETED) {
             log.warn("Transição inválida de {} para {}", current, next);
-            throw new BusinessException("Pedido deve passar por PROCESSING antes de COMPLETED");
+            throw new OrderStatusConflictException("Pedido deve passar por PROCESSING antes de COMPLETED");
         }
     }
 

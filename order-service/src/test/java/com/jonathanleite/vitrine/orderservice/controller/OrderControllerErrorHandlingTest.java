@@ -5,6 +5,7 @@ import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
 import com.jonathanleite.vitrine.orderservice.exception.ConflictException;
 import com.jonathanleite.vitrine.orderservice.exception.ForbiddenException;
+import com.jonathanleite.vitrine.orderservice.exception.OrderStatusConflictException;
 import com.jonathanleite.vitrine.orderservice.exception.ResourceNotFoundException;
 import com.jonathanleite.vitrine.orderservice.exception.UnauthorizedException;
 import com.jonathanleite.vitrine.orderservice.service.OrderService;
@@ -126,6 +127,23 @@ class OrderControllerErrorHandlingTest {
                 .andExpect(jsonPath("$.message").value("Pedido duplicado"))
                 .andExpect(jsonPath("$.path").value("/orders"))
                 .andExpect(jsonPath("$.correlationId").value("corr-order-409"));
+    }
+
+    @Test
+    void shouldReturn409WhenOrderStatusConflictHappens() throws Exception {
+        when(orderService.updateStatus(1L, com.jonathanleite.vitrine.orderservice.entity.OrderStatus.COMPLETED))
+                .thenThrow(new OrderStatusConflictException("Pedido deve passar por PROCESSING antes de COMPLETED"));
+
+        mockMvc.perform(patch("/orders/{id}/status", 1L)
+                        .param("status", "COMPLETED")
+                        .header("X-Correlation-Id", "corr-order-status-409"))
+                .andExpect(status().isConflict())
+                .andExpect(header().string("X-Correlation-Id", "corr-order-status-409"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(jsonPath("$.message").value("Pedido deve passar por PROCESSING antes de COMPLETED"))
+                .andExpect(jsonPath("$.path").value("/orders/1/status"))
+                .andExpect(jsonPath("$.correlationId").value("corr-order-status-409"));
     }
 
     @Test

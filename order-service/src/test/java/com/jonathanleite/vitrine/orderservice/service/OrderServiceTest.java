@@ -7,6 +7,7 @@ import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
 import com.jonathanleite.vitrine.orderservice.entity.Order;
 import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
+import com.jonathanleite.vitrine.orderservice.exception.OrderStatusConflictException;
 import com.jonathanleite.vitrine.orderservice.exception.ResourceNotFoundException;
 import com.jonathanleite.vitrine.orderservice.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
@@ -130,7 +131,12 @@ class OrderServiceTest {
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
-        assertThrows(BusinessException.class, () -> orderService.updateStatus(10L, OrderStatus.COMPLETED));
+        OrderStatusConflictException exception = assertThrows(
+                OrderStatusConflictException.class,
+                () -> orderService.updateStatus(10L, OrderStatus.COMPLETED)
+        );
+
+        assertEquals("Pedido deve passar por PROCESSING antes de COMPLETED", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
     }
 
@@ -140,7 +146,42 @@ class OrderServiceTest {
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
-        assertThrows(BusinessException.class, () -> orderService.updateStatus(10L, OrderStatus.PROCESSING));
+        OrderStatusConflictException exception = assertThrows(
+                OrderStatusConflictException.class,
+                () -> orderService.updateStatus(10L, OrderStatus.PROCESSING)
+        );
+
+        assertEquals("Pedido já finalizado não pode ser alterado", exception.getMessage());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldRejectStatusChangeWhenOrderIsCancelled() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.CANCELLED);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        OrderStatusConflictException exception = assertThrows(
+                OrderStatusConflictException.class,
+                () -> orderService.updateStatus(10L, OrderStatus.PROCESSING)
+        );
+
+        assertEquals("Pedido cancelado não pode ser alterado", exception.getMessage());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldRejectApplyingSameStatus() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.PROCESSING);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        OrderStatusConflictException exception = assertThrows(
+                OrderStatusConflictException.class,
+                () -> orderService.updateStatus(10L, OrderStatus.PROCESSING)
+        );
+
+        assertEquals("Pedido já está com esse status", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
     }
 }

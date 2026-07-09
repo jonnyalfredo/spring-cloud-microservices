@@ -50,6 +50,14 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(OrderStatusConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleOrderStatusConflict(
+            OrderStatusConflictException ex,
+            HttpServletRequest request) {
+
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiErrorResponse> handleConflict(
             ConflictException ex,
