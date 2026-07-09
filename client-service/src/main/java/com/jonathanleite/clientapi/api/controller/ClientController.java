@@ -113,9 +113,11 @@ public class ClientController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Cliente atualizado com sucesso",
                     content = @Content(schema = @Schema(implementation = ClientResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Payload inválido, duplicidade em outro cliente ou header ausente",
+            @ApiResponse(responseCode = "400", description = "Payload inválido ou header obrigatório ausente",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Email ou documento já cadastrado em outro cliente",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "Erro interno inesperado",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
@@ -162,9 +164,11 @@ public class ClientController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Cliente atualizado com sucesso",
                     content = @Content(schema = @Schema(implementation = ClientResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Payload inválido, duplicidade em outro cliente ou header ausente",
+            @ApiResponse(responseCode = "400", description = "Payload inválido ou header obrigatório ausente",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Email ou documento já cadastrado em outro cliente",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "Erro interno inesperado",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))

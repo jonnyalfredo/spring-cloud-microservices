@@ -441,7 +441,7 @@ Os erros seguem o formato padronizado do projeto:
 | --- | --- |
 | `400 Bad Request` | Dados inválidos, JSON inválido ou header obrigatório ausente |
 | `404 Not Found` | Cliente não encontrado |
-| `409 Conflict` | Email/documento duplicado na criação ou tentativa de ativar/inativar sem necessidade |
+| `409 Conflict` | Email/documento duplicado ou tentativa de ativar/inativar sem necessidade |
 | `500 Internal Server Error` | Erro inesperado |
 
 ### Exemplos de Erro
@@ -472,7 +472,7 @@ Cliente não encontrado:
 }
 ```
 
-Email duplicado na criação:
+Email duplicado:
 
 ```json
 {

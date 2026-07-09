@@ -1,6 +1,5 @@
 package com.jonathanleite.clientapi.api.exception;
 
-import com.jonathanleite.clientapi.domain.exception.BusinessException;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ForbiddenException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
@@ -33,7 +32,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
-    @ExceptionHandler({BusinessException.class, ValidationException.class})
+    @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ApiErrorResponse> handleBadRequest(
             RuntimeException ex,
             HttpServletRequest request) {

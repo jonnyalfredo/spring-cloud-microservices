@@ -118,7 +118,7 @@ class ClientServiceImplTest {
     }
 
     /* ===============================
-       FIND ALL (FILTROS + PAGINAÇÃO)
+       FIND ALL (FILTERS + PAGINATION)
        =============================== */
 
     @Test
@@ -139,6 +139,63 @@ class ClientServiceImplTest {
 
         assertEquals(2, result.getContent().size());
         assertEquals(2, result.getTotalElements());
+    }
+
+    @Test
+    void shouldThrowConflictWhenUpdateEmailBelongsToAnotherClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .email("atual@email.com")
+                .document("12345678900")
+                .build();
+
+        Client otherClient = Client.builder()
+                .id(2L)
+                .email("duplicado@email.com")
+                .build();
+
+        ClientRequestDTO request = ClientRequestDTO.builder()
+                .name("Jonathan")
+                .email("duplicado@email.com")
+                .document("12345678900")
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.findByEmail("duplicado@email.com")).thenReturn(Optional.of(otherClient));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.update(1L, request));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowConflictWhenUpdateDocumentBelongsToAnotherClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .email("atual@email.com")
+                .document("12345678900")
+                .build();
+
+        Client otherClient = Client.builder()
+                .id(2L)
+                .document("99999999999")
+                .build();
+
+        ClientRequestDTO request = ClientRequestDTO.builder()
+                .name("Jonathan")
+                .email("atual@email.com")
+                .document("99999999999")
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.findByEmail("atual@email.com")).thenReturn(Optional.empty());
+        when(clientRepository.findByDocument("99999999999")).thenReturn(Optional.of(otherClient));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.update(1L, request));
+
+        verify(clientRepository, never()).save(any(Client.class));
     }
 
     @Test
@@ -168,6 +225,56 @@ class ClientServiceImplTest {
         verify(clientRepository, never()).findByEmail(any());
         verify(clientRepository, never()).findByDocument(any());
         verify(clientRepository).save(client);
+    }
+
+    @Test
+    void shouldThrowConflictWhenPatchEmailBelongsToAnotherClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .email("atual@email.com")
+                .document("12345678900")
+                .build();
+
+        Client otherClient = Client.builder()
+                .id(2L)
+                .email("duplicado@email.com")
+                .build();
+
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setEmail("duplicado@email.com");
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.findByEmail("duplicado@email.com")).thenReturn(Optional.of(otherClient));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowConflictWhenPatchDocumentBelongsToAnotherClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .email("atual@email.com")
+                .document("12345678900")
+                .build();
+
+        Client otherClient = Client.builder()
+                .id(2L)
+                .document("99999999999")
+                .build();
+
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setDocument("99999999999");
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.findByDocument("99999999999")).thenReturn(Optional.of(otherClient));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).save(any(Client.class));
     }
 
     @Test

@@ -4,7 +4,6 @@ import com.jonathanleite.clientapi.api.dto.ClientPatchRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.entity.Client;
-import com.jonathanleite.clientapi.domain.exception.BusinessException;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
 import com.jonathanleite.clientapi.domain.exception.ValidationException;
@@ -115,13 +114,13 @@ public class ClientServiceImpl implements ClientService {
         clientRepository.findByEmail(request.getEmail())
                 .filter(client -> !client.getId().equals(id))
                 .ifPresent(client -> {
-                    throw new BusinessException("Email já cadastrado");
+                    throw new ConflictException("Email já cadastrado");
                 });
 
         clientRepository.findByDocument(request.getDocument())
                 .filter(client -> !client.getId().equals(id))
                 .ifPresent(client -> {
-                    throw new BusinessException("Documento já cadastrado");
+                    throw new ConflictException("Documento já cadastrado");
                 });
     }
 
@@ -139,7 +138,7 @@ public class ClientServiceImpl implements ClientService {
             clientRepository.findByEmail(request.getEmail())
                     .filter(c -> !c.getId().equals(id))
                     .ifPresent(c -> {
-                        throw new BusinessException("Email já cadastrado");
+                        throw new ConflictException("Email já cadastrado");
                     });
             client.setEmail(request.getEmail());
         }
@@ -148,7 +147,7 @@ public class ClientServiceImpl implements ClientService {
             clientRepository.findByDocument(request.getDocument())
                     .filter(c -> !c.getId().equals(id))
                     .ifPresent(c -> {
-                        throw new BusinessException("Documento já cadastrado");
+                        throw new ConflictException("Documento já cadastrado");
                     });
             client.setDocument(request.getDocument());
         }
