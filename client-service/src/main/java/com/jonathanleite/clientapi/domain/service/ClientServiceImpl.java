@@ -160,6 +160,37 @@ public class ClientServiceImpl implements ClientService {
         return toResponseDTO(clientRepository.save(client));
     }
 
+    @Override
+    public ClientResponseDTO activate(Long id) {
+        Client client = findClientOrThrow(id);
+
+        if (Boolean.TRUE.equals(client.getActive())) {
+            throw new ConflictException("Cliente já está ativo");
+        }
+
+        client.setActive(true);
+
+        return toResponseDTO(clientRepository.save(client));
+    }
+
+    @Override
+    public ClientResponseDTO deactivate(Long id) {
+        Client client = findClientOrThrow(id);
+
+        if (Boolean.FALSE.equals(client.getActive())) {
+            throw new ConflictException("Cliente já está inativo");
+        }
+
+        client.setActive(false);
+
+        return toResponseDTO(clientRepository.save(client));
+    }
+
+    private Client findClientOrThrow(Long id) {
+        return clientRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Cliente não encontrado"));
+    }
 
     private void validatePatchRequest(ClientPatchRequestDTO request) {
         validateOptionalText("Nome", request.getName());

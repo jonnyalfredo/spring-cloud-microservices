@@ -32,6 +32,8 @@ Este serviço faz parte do projeto principal `spring-cloud-microservices`. A doc
 | `GET` | `/clients?page=0&size=10` | Listar clientes |
 | `PUT` | `/clients/{id}` | Atualizar cliente |
 | `PATCH` | `/clients/{id}` | Atualizar parcialmente |
+| `PATCH` | `/clients/{id}/activate` | Ativar cliente |
+| `PATCH` | `/clients/{id}/deactivate` | Inativar cliente |
 | `DELETE` | `/clients/{id}` | Remover cliente |
 
 Rotas privadas acessadas diretamente exigem o header:

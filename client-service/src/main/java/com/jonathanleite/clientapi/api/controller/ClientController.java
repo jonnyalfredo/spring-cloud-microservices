@@ -55,6 +55,26 @@ public class ClientController {
         return ResponseEntity.ok(clientService.patch(id, request));
     }
 
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<ClientResponseDTO> activate(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") String userId) {
+
+        log.info("User {} activated client {}", userId, id);
+
+        return ResponseEntity.ok(clientService.activate(id));
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<ClientResponseDTO> deactivate(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") String userId) {
+
+        log.info("User {} deactivated client {}", userId, id);
+
+        return ResponseEntity.ok(clientService.deactivate(id));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ClientResponseDTO> findById(
             @PathVariable Long id,

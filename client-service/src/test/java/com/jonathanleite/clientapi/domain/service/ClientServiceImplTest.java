@@ -207,6 +207,72 @@ class ClientServiceImplTest {
     }
 
     /* ===============================
+       ACTIVATE / DEACTIVATE
+       =============================== */
+
+    @Test
+    void shouldActivateInactiveClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(false)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ClientResponseDTO response = clientService.activate(1L);
+
+        assertTrue(response.getActive());
+        verify(clientRepository).save(client);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenClientIsAlreadyActive() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(true)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.activate(1L));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldDeactivateActiveClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(true)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ClientResponseDTO response = clientService.deactivate(1L);
+
+        assertFalse(response.getActive());
+        verify(clientRepository).save(client);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenClientIsAlreadyInactive() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(false)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.deactivate(1L));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    /* ===============================
        DELETE
        =============================== */
 

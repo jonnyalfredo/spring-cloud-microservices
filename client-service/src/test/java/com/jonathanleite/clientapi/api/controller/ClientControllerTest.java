@@ -254,6 +254,66 @@ class ClientControllerTest {
     }
 
     @Test
+    void shouldActivateClientSuccessfully() throws Exception {
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
+                .active(true)
+                .build();
+
+        when(clientService.activate(1L)).thenReturn(response);
+
+        mockMvc.perform(patch("/clients/{id}/activate", 1L)
+                        .header("X-User-Id", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.active").value(true));
+    }
+
+    @Test
+    void shouldReturn409WhenClientIsAlreadyActive() throws Exception {
+        when(clientService.activate(1L))
+                .thenThrow(new ConflictException("Cliente já está ativo"));
+
+        mockMvc.perform(patch("/clients/{id}/activate", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-active"))
+                .andExpect(status().isConflict())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-active"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Cliente já está ativo"));
+    }
+
+    @Test
+    void shouldDeactivateClientSuccessfully() throws Exception {
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
+                .active(false)
+                .build();
+
+        when(clientService.deactivate(1L)).thenReturn(response);
+
+        mockMvc.perform(patch("/clients/{id}/deactivate", 1L)
+                        .header("X-User-Id", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.active").value(false));
+    }
+
+    @Test
+    void shouldReturn409WhenClientIsAlreadyInactive() throws Exception {
+        when(clientService.deactivate(1L))
+                .thenThrow(new ConflictException("Cliente já está inativo"));
+
+        mockMvc.perform(patch("/clients/{id}/deactivate", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-inactive"))
+                .andExpect(status().isConflict())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-inactive"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Cliente já está inativo"));
+    }
+
+    @Test
     void shouldFindClientByIdSuccessfully() throws Exception {
         ClientResponseDTO response = ClientResponseDTO.builder()
                 .id(1L)
