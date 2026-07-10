@@ -30,3 +30,20 @@ Configuracao aplicada por servico:
 - `permittedNumberOfCallsInHalfOpenState`: `3`.
 
 Quando o circuito abre, o gateway retorna fallback em JSON padronizado com status `503 Service Unavailable` e `X-Correlation-Id`.
+
+## Actuator
+
+O gateway expoe somente os endpoints operacionais necessarios:
+
+- `/actuator/health`: publico, usado pelo Docker Compose.
+- `/actuator/info`: protegido por JWT.
+- `/actuator/metrics`: protegido por JWT.
+- `/actuator/gateway`: protegido por JWT.
+
+O health check nao exibe detalhes internos sensiveis. O endpoint `/actuator/info` informa nome, descricao e versao do servico para facilitar validacao operacional.
+
+No Docker Compose, a saude do gateway e verificada com:
+
+```bash
+wget -q -O - http://localhost:8080/actuator/health
+```

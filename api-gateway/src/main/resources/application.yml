@@ -97,10 +97,27 @@ resilience4j:
         automaticTransitionFromOpenToHalfOpenEnabled: true
 
 management:
+  info:
+    env:
+      enabled: true
   endpoints:
     web:
       exposure:
         include: health,info,metrics,gateway
   endpoint:
+    gateway:
+      enabled: true
     health:
-      show-details: always
+      probes:
+        enabled: true
+      show-details: never
+      show-components: never
+
+info:
+  app:
+    name: api-gateway
+    description: Entrada unica dos microsservicos Vitrine API
+    version: 0.0.1-SNAPSHOT
+  operational:
+    public-health-endpoint: /actuator/health
+    protected-actuator-endpoints: /actuator/info,/actuator/metrics,/actuator/gateway

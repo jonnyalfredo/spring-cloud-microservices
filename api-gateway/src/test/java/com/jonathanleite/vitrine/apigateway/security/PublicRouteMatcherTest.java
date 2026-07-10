@@ -28,6 +28,16 @@ class PublicRouteMatcherTest {
         assertThat(matcher.isPublic("/api/v1/publications")).isFalse();
     }
 
+    @Test
+    void shouldKeepSensitiveActuatorEndpointsProtected() {
+        PublicRouteMatcher matcher = new PublicRouteMatcher(publicRouteProperties());
+
+        assertThat(matcher.isPublic("/actuator/info")).isFalse();
+        assertThat(matcher.isPublic("/actuator/metrics")).isFalse();
+        assertThat(matcher.isPublic("/actuator/gateway")).isFalse();
+        assertThat(matcher.isPublic("/actuator")).isFalse();
+    }
+
     private PublicRouteProperties publicRouteProperties() {
         PublicRouteProperties properties = new PublicRouteProperties();
         properties.setExact(List.of(
