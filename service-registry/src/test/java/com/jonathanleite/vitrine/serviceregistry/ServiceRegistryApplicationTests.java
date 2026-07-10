@@ -8,7 +8,7 @@ import org.springframework.core.env.Environment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class ServiceregistryApplicationTests {
+class ServiceRegistryApplicationTests {
 
 	@Autowired
 	private Environment environment;
