@@ -1,6 +1,7 @@
 package com.jonathanleite.vitrine.orderservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jonathanleite.vitrine.orderservice.client.ClientServiceFallbackFactory;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
 import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -173,6 +175,32 @@ class OrderControllerErrorHandlingTest {
                 .andExpect(jsonPath("$.message").value("Transição inválida de CREATED para COMPLETED"))
                 .andExpect(jsonPath("$.path").value("/orders/1/status"))
                 .andExpect(jsonPath("$.correlationId").value("corr-order-status-409"));
+    }
+
+    @Test
+    void shouldReturn503WhenClientServiceIsUnavailable() throws Exception {
+        OrderRequestDTO request = new OrderRequestDTO(1L, "Compra teste", BigDecimal.TEN);
+
+        when(orderService.createOrder(any(OrderRequestDTO.class)))
+                .thenThrow(new BusinessException(
+                        ClientServiceFallbackFactory.CLIENT_SERVICE_UNAVAILABLE_MESSAGE,
+                        "CLIENT_SERVICE_UNAVAILABLE",
+                        HttpStatus.SERVICE_UNAVAILABLE
+                ));
+
+        mockMvc.perform(post("/orders")
+                        .header("X-Correlation-Id", "corr-client-service-unavailable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-service-unavailable"))
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.error").value("Service Unavailable"))
+                .andExpect(jsonPath("$.message").value(
+                        ClientServiceFallbackFactory.CLIENT_SERVICE_UNAVAILABLE_MESSAGE
+                ))
+                .andExpect(jsonPath("$.path").value("/orders"))
+                .andExpect(jsonPath("$.correlationId").value("corr-client-service-unavailable"));
     }
 
     @Test

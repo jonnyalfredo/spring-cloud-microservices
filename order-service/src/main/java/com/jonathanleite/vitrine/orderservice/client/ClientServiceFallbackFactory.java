@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 public class ClientServiceFallbackFactory implements FallbackFactory<ClientServiceClient> {
 
     private static final Logger log = LoggerFactory.getLogger(ClientServiceFallbackFactory.class);
+    public static final String CLIENT_SERVICE_UNAVAILABLE_MESSAGE =
+            "Client-service indisponível. Não foi possível validar o cliente no momento.";
 
     @Override
     public ClientServiceClient create(Throwable cause) {
@@ -26,7 +28,7 @@ public class ClientServiceFallbackFactory implements FallbackFactory<ClientServi
 
                 log.error("Falha ao consultar client-api para clientId={}: {}", id, cause.getMessage());
                 throw new BusinessException(
-                        "Não foi possível validar o cliente no momento",
+                        CLIENT_SERVICE_UNAVAILABLE_MESSAGE,
                         "CLIENT_SERVICE_UNAVAILABLE",
                         HttpStatus.SERVICE_UNAVAILABLE
                 );

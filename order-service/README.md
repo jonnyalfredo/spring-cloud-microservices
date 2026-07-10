@@ -46,6 +46,19 @@ Este serviço faz parte do projeto principal `spring-cloud-microservices`. A doc
 }
 ```
 
+## Integração com Client Service
+
+Ao criar um pedido, o `order-service` consulta o `client-service` via OpenFeign antes de salvar o registro.
+
+Contrato da integração:
+
+- Endpoint consultado: `GET /clients/{id}`.
+- Header enviado: `X-User-Id: order-service`.
+- Cliente existente e ativo: pedido é criado.
+- Cliente inexistente: retorna `404 Not Found`.
+- Cliente inativo: retorna `400 Bad Request`.
+- `client-service` indisponível: retorna `503 Service Unavailable` com mensagem clara.
+
 ## Regras de status
 
 - Status inicial: `CREATED`.

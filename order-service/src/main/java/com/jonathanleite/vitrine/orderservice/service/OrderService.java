@@ -1,6 +1,7 @@
 package com.jonathanleite.vitrine.orderservice.service;
 
 import com.jonathanleite.vitrine.orderservice.client.ClientServiceClient;
+import com.jonathanleite.vitrine.orderservice.client.ClientServiceFallbackFactory;
 import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
@@ -125,7 +126,7 @@ public class OrderService {
         } catch (Exception ex) {
             log.error("Erro ao chamar client-api para clientId={}: {}", clientId, ex.getMessage());
             throw new BusinessException(
-                    "Não foi possível validar o cliente no momento",
+                    ClientServiceFallbackFactory.CLIENT_SERVICE_UNAVAILABLE_MESSAGE,
                     "CLIENT_SERVICE_UNAVAILABLE",
                     HttpStatus.SERVICE_UNAVAILABLE
             );

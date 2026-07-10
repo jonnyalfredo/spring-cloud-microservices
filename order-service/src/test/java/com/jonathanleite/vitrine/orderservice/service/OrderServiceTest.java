@@ -1,6 +1,7 @@
 package com.jonathanleite.vitrine.orderservice.service;
 
 import com.jonathanleite.vitrine.orderservice.client.ClientServiceClient;
+import com.jonathanleite.vitrine.orderservice.client.ClientServiceFallbackFactory;
 import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -99,6 +101,11 @@ class OrderServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> orderService.createOrder(request));
 
         assertEquals("CLIENT_SERVICE_UNAVAILABLE", exception.getErrorCode());
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatus());
+        assertEquals(
+                ClientServiceFallbackFactory.CLIENT_SERVICE_UNAVAILABLE_MESSAGE,
+                exception.getMessage()
+        );
         verify(orderRepository, never()).save(any(Order.class));
     }
 
