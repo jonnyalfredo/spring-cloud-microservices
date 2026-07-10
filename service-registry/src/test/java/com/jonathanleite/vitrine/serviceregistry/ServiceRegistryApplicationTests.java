@@ -3,6 +3,7 @@ package com.jonathanleite.vitrine.serviceregistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -12,6 +13,21 @@ class ServiceRegistryApplicationTests {
 
 	@Autowired
 	private Environment environment;
+
+	@Autowired
+	private ApplicationContext context;
+
+	@Test
+	void shouldStartApplicationContext() {
+		assertThat(context).isNotNull();
+		assertThat(context.getBean(ServiceRegistryApplication.class)).isNotNull();
+	}
+
+	@Test
+	void shouldUseConfiguredApplicationName() {
+		assertThat(environment.getProperty("spring.application.name"))
+				.isEqualTo("service-registry");
+	}
 
 	@Test
 	void shouldRunAsStandaloneEurekaServer() {
