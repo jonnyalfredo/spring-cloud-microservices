@@ -11,3 +11,22 @@ eureka:
     fetch-registry: false
   server:
     enable-self-preservation: false
+
+management:
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+
+info:
+  app:
+    name: Service Registry
+    description: Eureka Server responsavel pelo service discovery
+    version: 1.0.0

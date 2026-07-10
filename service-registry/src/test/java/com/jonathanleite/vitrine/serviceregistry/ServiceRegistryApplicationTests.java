@@ -20,4 +20,26 @@ class ServiceRegistryApplicationTests {
 		assertThat(environment.getProperty("eureka.client.fetch-registry")).isEqualTo("false");
 	}
 
+	@Test
+	void shouldExposeOnlyRequiredActuatorEndpoints() {
+		assertThat(environment.getProperty("management.endpoints.web.exposure.include"))
+				.isEqualTo("health,info");
+		assertThat(environment.getProperty("management.info.env.enabled"))
+				.isEqualTo("true");
+		assertThat(environment.getProperty("management.endpoint.health.show-details"))
+				.isEqualTo("never");
+		assertThat(environment.getProperty("management.endpoint.health.show-components"))
+				.isEqualTo("never");
+	}
+
+	@Test
+	void shouldExposeServiceRegistryInformation() {
+		assertThat(environment.getProperty("info.app.name"))
+				.isEqualTo("Service Registry");
+		assertThat(environment.getProperty("info.app.description"))
+				.isEqualTo("Eureka Server responsavel pelo service discovery");
+		assertThat(environment.getProperty("info.app.version"))
+				.isEqualTo("1.0.0");
+	}
+
 }
