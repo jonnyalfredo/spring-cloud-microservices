@@ -17,7 +17,13 @@ public class JwtAuthenticationService {
     public String authenticate(String token) {
         try {
             Claims claims = jwtUtil.validateToken(token);
-            return jwtUtil.extractUsername(claims);
+            String username = jwtUtil.extractUsername(claims);
+
+            if (username == null || username.isBlank()) {
+                throw new JwtAuthenticationException("Token sem identificacao do usuario");
+            }
+
+            return username;
         } catch (JwtAuthenticationException e) {
             throw e;
         } catch (Exception e) {

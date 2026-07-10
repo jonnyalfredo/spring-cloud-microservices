@@ -180,6 +180,49 @@ class AuthenticationFilterTest {
 
         assertThat(capturedExchange.get().getRequest().getHeaders().getFirst("X-User-Id"))
                 .isEqualTo("user-123");
+        assertThat(capturedExchange.get().getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+                .isNull();
+    }
+
+    @Test
+    void shouldOverwriteExternalUserIdWithJwtSubject() {
+        Claims claims = mock(Claims.class);
+        AtomicReference<ServerWebExchange> capturedExchange = new AtomicReference<>();
+        GatewayFilterChain chain = nextExchange -> {
+            capturedExchange.set(nextExchange);
+            return Mono.empty();
+        };
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/v1/orders")
+                        .header("X-Correlation-Id", "corr-overwrite-user")
+                        .header("X-User-Id", "external-user")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token")
+        );
+
+        when(jwtUtil.validateToken("valid-token")).thenReturn(claims);
+        when(jwtUtil.extractUsername(claims)).thenReturn("jwt-user");
+
+        filter.filter(exchange, chain).block();
+
+        assertThat(capturedExchange.get().getRequest().getHeaders().get("X-User-Id"))
+                .containsExactly("jwt-user");
+        assertThat(capturedExchange.get().getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+                .isNull();
+    }
+
+    @Test
+    void shouldRejectTokenWithoutUserIdentification() throws Exception {
+        Claims claims = mock(Claims.class);
+        GatewayFilterChain chain = mock(GatewayFilterChain.class);
+        MockServerWebExchange exchange = protectedExchange("token-without-user", "corr-no-user");
+
+        when(jwtUtil.validateToken("token-without-user")).thenReturn(claims);
+        when(jwtUtil.extractUsername(claims)).thenReturn(" ");
+
+        filter.filter(exchange, chain).block();
+
+        assertUnauthorizedError(exchange, "Token sem identificacao do usuario", "corr-no-user");
+        verify(chain, never()).filter(any());
     }
 
     private MockServerWebExchange protectedExchange(String token, String correlationId) {

@@ -8,6 +8,7 @@ import com.jonathanleite.vitrine.apigateway.security.PublicRouteMatcher;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,8 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class AuthenticationFilter implements GlobalFilter, Ordered {
+
+    private static final String USER_ID_HEADER = "X-User-Id";
 
     private final PublicRouteMatcher publicRouteMatcher;
     private final BearerTokenExtractor bearerTokenExtractor;
@@ -54,7 +57,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private ServerWebExchange withUserId(ServerWebExchange exchange, String username) {
         ServerHttpRequest mutatedRequest = exchange.getRequest()
                 .mutate()
-                .header("X-User-Id", username)
+                .headers(headers -> {
+                    headers.remove(HttpHeaders.AUTHORIZATION);
+                    headers.remove(USER_ID_HEADER);
+                    headers.set(USER_ID_HEADER, username);
+                })
                 .build();
 
         return exchange.mutate().request(mutatedRequest).build();
