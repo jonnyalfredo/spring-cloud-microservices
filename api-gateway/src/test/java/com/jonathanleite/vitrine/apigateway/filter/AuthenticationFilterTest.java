@@ -2,7 +2,12 @@ package com.jonathanleite.vitrine.apigateway.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jonathanleite.vitrine.apigateway.config.PublicRouteProperties;
 import com.jonathanleite.vitrine.apigateway.exception.JwtAuthenticationException;
+import com.jonathanleite.vitrine.apigateway.security.AuthenticationErrorWriter;
+import com.jonathanleite.vitrine.apigateway.security.BearerTokenExtractor;
+import com.jonathanleite.vitrine.apigateway.security.JwtAuthenticationService;
+import com.jonathanleite.vitrine.apigateway.security.PublicRouteMatcher;
 import com.jonathanleite.vitrine.apigateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.Test;
@@ -29,7 +34,13 @@ class AuthenticationFilterTest {
 
     private final JwtUtil jwtUtil = mock(JwtUtil.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final AuthenticationFilter filter = new AuthenticationFilter(jwtUtil, objectMapper);
+    private final PublicRouteProperties publicRouteProperties = publicRouteProperties();
+    private final AuthenticationFilter filter = new AuthenticationFilter(
+            new PublicRouteMatcher(publicRouteProperties),
+            new BearerTokenExtractor(),
+            new JwtAuthenticationService(jwtUtil),
+            new AuthenticationErrorWriter(objectMapper)
+    );
 
     @Test
     void shouldAllowPublicRouteWithoutToken() {
@@ -177,6 +188,18 @@ class AuthenticationFilterTest {
                         .header("X-Correlation-Id", correlationId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
         );
+    }
+
+    private PublicRouteProperties publicRouteProperties() {
+        PublicRouteProperties properties = new PublicRouteProperties();
+        properties.setExact(List.of(
+                "/api/v1/auth/login",
+                "/api/v1/clients/public/test",
+                "/api/v1/orders/public/test",
+                "/actuator/health"
+        ));
+        properties.setPrefixes(List.of("/actuator/health/"));
+        return properties;
     }
 
     private void assertPublicRouteAllowed(String path) {
