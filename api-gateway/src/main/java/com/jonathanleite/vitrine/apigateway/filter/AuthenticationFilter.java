@@ -20,12 +20,20 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+    private static final String ACTUATOR_HEALTH_PREFIX = "/actuator/health/";
+    private static final Set<String> PUBLIC_ROUTES = Set.of(
+            "/api/v1/auth/login",
+            "/api/v1/clients/public/test",
+            "/api/v1/orders/public/test",
+            "/actuator/health"
+    );
 
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper;
@@ -85,7 +93,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublicRoute(String path) {
-        return path.contains("/auth") || path.contains("/public");
+        return PUBLIC_ROUTES.contains(path) || path.startsWith(ACTUATOR_HEALTH_PREFIX);
     }
 
     private Mono<Void> onError(ServerWebExchange exchange,

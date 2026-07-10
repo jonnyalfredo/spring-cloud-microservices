@@ -15,6 +15,7 @@ import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,17 +33,33 @@ class AuthenticationFilterTest {
 
     @Test
     void shouldAllowPublicRouteWithoutToken() {
-        GatewayFilterChain chain = mock(GatewayFilterChain.class);
-        MockServerWebExchange exchange = MockServerWebExchange.from(
-                MockServerHttpRequest.get("/api/v1/clients/public/test")
+        assertPublicRouteAllowed("/api/v1/auth/login");
+        assertPublicRouteAllowed("/api/v1/clients/public/test");
+        assertPublicRouteAllowed("/api/v1/orders/public/test");
+        assertPublicRouteAllowed("/actuator/health");
+        assertPublicRouteAllowed("/actuator/health/readiness");
+    }
+
+    @Test
+    void shouldRejectAmbiguousRoutesContainingPublicOrAuth() throws Exception {
+        List<String> ambiguousPaths = List.of(
+                "/api/v1/orders/public-data",
+                "/api/v1/clients/my-auth-history",
+                "/api/v1/publications"
         );
 
-        when(chain.filter(any())).thenReturn(Mono.empty());
+        for (String path : ambiguousPaths) {
+            GatewayFilterChain chain = mock(GatewayFilterChain.class);
+            MockServerWebExchange exchange = MockServerWebExchange.from(
+                    MockServerHttpRequest.get(path)
+                            .header("X-Correlation-Id", "corr-ambiguous-route")
+            );
 
-        filter.filter(exchange, chain).block();
+            filter.filter(exchange, chain).block();
 
-        verify(chain).filter(exchange);
-        verify(jwtUtil, never()).validateToken(any());
+            assertUnauthorizedError(exchange, "Token ausente", "corr-ambiguous-route", path);
+            verify(chain, never()).filter(any());
+        }
     }
 
     @Test
@@ -162,9 +179,30 @@ class AuthenticationFilterTest {
         );
     }
 
+    private void assertPublicRouteAllowed(String path) {
+        GatewayFilterChain chain = mock(GatewayFilterChain.class);
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get(path)
+        );
+
+        when(chain.filter(any())).thenReturn(Mono.empty());
+
+        filter.filter(exchange, chain).block();
+
+        verify(chain).filter(exchange);
+        verify(jwtUtil, never()).validateToken(any());
+    }
+
     private void assertUnauthorizedError(MockServerWebExchange exchange,
                                          String message,
                                          String correlationId) throws Exception {
+        assertUnauthorizedError(exchange, message, correlationId, "/api/v1/orders");
+    }
+
+    private void assertUnauthorizedError(MockServerWebExchange exchange,
+                                         String message,
+                                         String correlationId,
+                                         String path) throws Exception {
         JsonNode body = responseBody(exchange);
 
         assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -173,7 +211,7 @@ class AuthenticationFilterTest {
         assertThat(body.get("status").asInt()).isEqualTo(401);
         assertThat(body.get("error").asText()).isEqualTo("Unauthorized");
         assertThat(body.get("message").asText()).isEqualTo(message);
-        assertThat(body.get("path").asText()).isEqualTo("/api/v1/orders");
+        assertThat(body.get("path").asText()).isEqualTo(path);
         assertThat(body.get("correlationId").asText()).isEqualTo(correlationId);
         assertThat(body.get("timestamp").asText()).isNotBlank();
     }
