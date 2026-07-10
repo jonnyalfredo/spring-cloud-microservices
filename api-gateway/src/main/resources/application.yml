@@ -20,6 +20,10 @@ spring:
 
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 5s
+
       default-filters:
         - AddResponseHeader=X-Gateway, API-Gateway
 
@@ -34,7 +38,7 @@ spring:
             # Retry
             - name: Retry
               args:
-                retries: 3
+                retries: 2
                 statuses: BAD_GATEWAY, GATEWAY_TIMEOUT, INTERNAL_SERVER_ERROR
                 methods: GET
 
@@ -54,7 +58,7 @@ spring:
             # Retry
             - name: Retry
               args:
-                retries: 3
+                retries: 2
                 statuses: BAD_GATEWAY, GATEWAY_TIMEOUT, INTERNAL_SERVER_ERROR
                 methods: GET
 
@@ -75,16 +79,22 @@ resilience4j:
   circuitbreaker:
     instances:
       clientServiceCircuitBreaker:
+        slidingWindowType: COUNT_BASED
         slidingWindowSize: 10
+        minimumNumberOfCalls: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
 
       orderServiceCircuitBreaker:
+        slidingWindowType: COUNT_BASED
         slidingWindowSize: 10
+        minimumNumberOfCalls: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
 
 management:
   endpoints:
