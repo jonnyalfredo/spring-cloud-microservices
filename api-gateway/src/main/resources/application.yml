@@ -31,7 +31,7 @@ spring:
         - id: client-api
           uri: lb://client-api
           predicates:
-            - Path=/api/v1/clients/**
+            - Path=/api/v1/clients,/api/v1/clients/**
           filters:
             - StripPrefix=2
 
@@ -51,7 +51,7 @@ spring:
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/api/v1/orders/**
+            - Path=/api/v1/orders,/api/v1/orders/**
           filters:
             - StripPrefix=2
 

@@ -24,4 +24,12 @@ class ApiGatewayApplicationTests {
         assertThat(environment.getProperty("spring.cloud.gateway.routes[1].id"))
                 .isEqualTo("order-service");
     }
+
+    @Test
+    void shouldRouteBaseAndNestedApiPaths() {
+        assertThat(environment.getProperty("spring.cloud.gateway.routes[0].predicates[0]"))
+                .isEqualTo("Path=/api/v1/clients,/api/v1/clients/**");
+        assertThat(environment.getProperty("spring.cloud.gateway.routes[1].predicates[0]"))
+                .isEqualTo("Path=/api/v1/orders,/api/v1/orders/**");
+    }
 }
