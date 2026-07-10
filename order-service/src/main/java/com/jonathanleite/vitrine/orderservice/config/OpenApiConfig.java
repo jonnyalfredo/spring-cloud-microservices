@@ -15,7 +15,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Order Service API")
-                        .description("API responsavel pelo gerenciamento de pedidos")
+                        .description("API responsável pelo gerenciamento de pedidos")
                         .version("v1")
                         .contact(new Contact()
                                 .name("Jonathan Leite"))

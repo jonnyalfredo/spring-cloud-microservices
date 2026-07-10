@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 public class LoggingFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(LoggingFilter.class);
+    private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -24,24 +25,33 @@ public class LoggingFilter implements GlobalFilter, Ordered {
         String ip = exchange.getRequest().getRemoteAddress() != null
                 ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
                 : "unknown";
+        String correlationId = exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
 
-        log.info("➡️ Request: {} {} | IP: {}", method, path, ip);
+        log.info("Request: {} {} | CorrelationId: {} | IP: {}", method, path, correlationId, ip);
 
-        return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+        return chain.filter(exchange)
+                .doOnError(ex -> log.error(
+                        "Request failed: {} {} | CorrelationId: {} | Error: {}",
+                        method,
+                        path,
+                        correlationId,
+                        ex.getClass().getSimpleName()
+                ))
+                .then(Mono.fromRunnable(() -> {
 
-            long duration = System.currentTimeMillis() - startTime;
+                    long duration = System.currentTimeMillis() - startTime;
 
-            int status = exchange.getResponse().getStatusCode() != null
-                    ? exchange.getResponse().getStatusCode().value()
-                    : 0;
+                    int status = exchange.getResponse().getStatusCode() != null
+                            ? exchange.getResponse().getStatusCode().value()
+                            : 0;
 
-            log.info("⬅️ Response: {} {} | Status: {} | Time: {} ms",
-                    method, path, status, duration);
-        }));
+                    log.info("Response: {} {} | CorrelationId: {} | Status: {} | Time: {} ms",
+                            method, path, correlationId, status, duration);
+                }));
     }
 
     @Override
     public int getOrder() {
-        return -1;
+        return -2;
     }
 }

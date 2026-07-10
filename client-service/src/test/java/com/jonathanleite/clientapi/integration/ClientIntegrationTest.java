@@ -125,6 +125,61 @@ class ClientIntegrationTest {
     }
 
     @Test
+    void shouldFilterClientsByNameEmailDocumentAndActiveWithPagination() throws Exception {
+        ClientRequestDTO matchingClient = ClientRequestDTO.builder()
+                .name("Maria Silva")
+                .email("maria.filtro@email.com")
+                .document("44444444444")
+                .build();
+
+        ClientRequestDTO otherClient = ClientRequestDTO.builder()
+                .name("Joao Silva")
+                .email("joao.filtro@email.com")
+                .document("55555555555")
+                .build();
+
+        String matchingResponse = mockMvc.perform(
+                        post("/clients")
+                                .header("X-User-Id", "test-user")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(matchingClient))
+                )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        mockMvc.perform(
+                        post("/clients")
+                                .header("X-User-Id", "test-user")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(otherClient))
+                )
+                .andExpect(status().isCreated());
+
+        Long matchingId = objectMapper.readTree(matchingResponse).get("id").asLong();
+
+        mockMvc.perform(delete("/clients/{id}", matchingId)
+                        .header("X-User-Id", "test-user"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/clients")
+                        .header("X-User-Id", "test-user")
+                        .param("name", "maria")
+                        .param("email", "maria.filtro@email.com")
+                        .param("document", "44444444444")
+                        .param("active", "false")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(matchingId))
+                .andExpect(jsonPath("$.content[0].name").value("Maria Silva"))
+                .andExpect(jsonPath("$.content[0].active").value(false))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
     void shouldUpdateClientSuccessfully() throws Exception {
         ClientRequestDTO request = ClientRequestDTO.builder()
                 .name("Cliente Update")
@@ -162,7 +217,7 @@ class ClientIntegrationTest {
     }
 
     @Test
-    void shouldDeleteClientSuccessfully() throws Exception {
+    void shouldDeleteClientLogically() throws Exception {
         ClientRequestDTO request = ClientRequestDTO.builder()
                 .name("Cliente Delete")
                 .email("delete@email.com")
@@ -185,5 +240,11 @@ class ClientIntegrationTest {
         mockMvc.perform(delete("/clients/{id}", id)
                         .header("X-User-Id", "test-user"))
                 .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/clients/{id}", id)
+                        .header("X-User-Id", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.active").value(false));
     }
 }

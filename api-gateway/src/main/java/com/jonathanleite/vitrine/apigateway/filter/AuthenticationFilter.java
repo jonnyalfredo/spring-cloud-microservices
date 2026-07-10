@@ -1,7 +1,10 @@
 package com.jonathanleite.vitrine.apigateway.filter;
 
-import com.jonathanleite.vitrine.apigateway.util.JwtUtil;
-import io.jsonwebtoken.Claims;
+import com.jonathanleite.vitrine.apigateway.exception.JwtAuthenticationException;
+import com.jonathanleite.vitrine.apigateway.security.AuthenticationErrorWriter;
+import com.jonathanleite.vitrine.apigateway.security.BearerTokenExtractor;
+import com.jonathanleite.vitrine.apigateway.security.JwtAuthenticationService;
+import com.jonathanleite.vitrine.apigateway.security.PublicRouteMatcher;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -15,10 +18,21 @@ import reactor.core.publisher.Mono;
 @Component
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
-    private final JwtUtil jwtUtil;
+    private static final String USER_ID_HEADER = "X-User-Id";
 
-    public AuthenticationFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
+    private final PublicRouteMatcher publicRouteMatcher;
+    private final BearerTokenExtractor bearerTokenExtractor;
+    private final JwtAuthenticationService jwtAuthenticationService;
+    private final AuthenticationErrorWriter authenticationErrorWriter;
+
+    public AuthenticationFilter(PublicRouteMatcher publicRouteMatcher,
+                                BearerTokenExtractor bearerTokenExtractor,
+                                JwtAuthenticationService jwtAuthenticationService,
+                                AuthenticationErrorWriter authenticationErrorWriter) {
+        this.publicRouteMatcher = publicRouteMatcher;
+        this.bearerTokenExtractor = bearerTokenExtractor;
+        this.jwtAuthenticationService = jwtAuthenticationService;
+        this.authenticationErrorWriter = authenticationErrorWriter;
     }
 
     @Override
@@ -26,64 +40,35 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         String path = exchange.getRequest().getURI().getPath();
 
-        // 🔓 Rotas públicas
-        if (isPublicRoute(path)) {
+        // Public routes do not require a JWT.
+        if (publicRouteMatcher.isPublic(path)) {
             return chain.filter(exchange);
         }
 
-        // 🔐 Header Authorization
-        if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-            return onError(exchange, "Missing Authorization header", HttpStatus.UNAUTHORIZED);
-        }
-
-        String authHeader = exchange.getRequest()
-                .getHeaders()
-                .getFirst(HttpHeaders.AUTHORIZATION);
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return onError(exchange, "Invalid Authorization header", HttpStatus.UNAUTHORIZED);
-        }
-
-        String token = authHeader.substring(7);
-
-        Claims claims;
-
         try {
-            claims = jwtUtil.validateToken(token);
-        } catch (Exception e) {
-            return onError(exchange, "Invalid JWT token", HttpStatus.UNAUTHORIZED);
+            String token = bearerTokenExtractor.extract(exchange.getRequest());
+            String username = jwtAuthenticationService.authenticate(token);
+            return chain.filter(withUserId(exchange, username));
+        } catch (JwtAuthenticationException e) {
+            return authenticationErrorWriter.write(exchange, e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
+    }
 
-        // 🔥 Extrai usuário do token
-        String username = jwtUtil.extractUsername(claims);
-
-        // 🔥 Propaga header para os microsserviços
+    private ServerWebExchange withUserId(ServerWebExchange exchange, String username) {
         ServerHttpRequest mutatedRequest = exchange.getRequest()
                 .mutate()
-                .header("X-User-Id", username)
+                .headers(headers -> {
+                    headers.remove(HttpHeaders.AUTHORIZATION);
+                    headers.remove(USER_ID_HEADER);
+                    headers.set(USER_ID_HEADER, username);
+                })
                 .build();
 
-        return chain.filter(
-                exchange.mutate()
-                        .request(mutatedRequest)
-                        .build()
-        );
-    }
-
-    private boolean isPublicRoute(String path) {
-        return path.contains("/auth") || path.contains("/public");
-    }
-
-    private Mono<Void> onError(ServerWebExchange exchange,
-                               String err,
-                               HttpStatus status) {
-
-        exchange.getResponse().setStatusCode(status);
-        return exchange.getResponse().setComplete();
+        return exchange.mutate().request(mutatedRequest).build();
     }
 
     @Override
     public int getOrder() {
-        return -2;
+        return -1;
     }
 }

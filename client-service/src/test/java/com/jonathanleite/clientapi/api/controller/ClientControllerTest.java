@@ -25,10 +25,11 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -91,7 +92,7 @@ class ClientControllerTest {
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Erro de validacao"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
                 .andExpect(jsonPath("$.path").value("/clients"))
                 .andExpect(jsonPath("$.correlationId").value("corr-client-validation"))
                 .andExpect(jsonPath("$.errors").isArray())
@@ -116,7 +117,7 @@ class ClientControllerTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-client-header"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Header obrigatorio ausente: X-User-Id"))
+                .andExpect(jsonPath("$.message").value("Header obrigatório ausente: X-User-Id"))
                 .andExpect(jsonPath("$.path").value("/clients"))
                 .andExpect(jsonPath("$.correlationId").value("corr-client-header"));
     }
@@ -131,7 +132,7 @@ class ClientControllerTest {
                 .build();
 
         when(clientService.create(any(ClientRequestDTO.class)))
-                .thenThrow(new ConflictException("Email ja cadastrado"));
+                .thenThrow(new ConflictException("Email já cadastrado"));
 
         mockMvc.perform(post("/clients")
                         .header("X-User-Id", "test-user")
@@ -143,7 +144,7 @@ class ClientControllerTest {
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.message").value("Email ja cadastrado"))
+                .andExpect(jsonPath("$.message").value("Email já cadastrado"))
                 .andExpect(jsonPath("$.path").value("/clients"))
                 .andExpect(jsonPath("$.correlationId").value("corr-client-409"));
     }
@@ -174,6 +175,145 @@ class ClientControllerTest {
     }
 
     @Test
+    void shouldPatchClientSuccessfully() throws Exception {
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
+                .name("Jonathan Leite")
+                .email("teste@email.com")
+                .document("12345678900")
+                .phone("11888888888")
+                .build();
+
+        when(clientService.patch(eq(1L), any())).thenReturn(response);
+
+        mockMvc.perform(patch("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Jonathan Leite",
+                                  "phone": "11888888888"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Jonathan Leite"))
+                .andExpect(jsonPath("$.phone").value("11888888888"))
+                .andExpect(jsonPath("$.email").value("teste@email.com"))
+                .andExpect(jsonPath("$.document").value("12345678900"));
+    }
+
+    @Test
+    void shouldReturn400WhenPatchEmailIsInvalid() throws Exception {
+        mockMvc.perform(patch("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-patch-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "email-invalido"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-patch-email"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
+                .andExpect(jsonPath("$.errors[0].field").value("email"));
+    }
+
+    @Test
+    void shouldReturn400WhenPatchFieldIsBlank() throws Exception {
+        mockMvc.perform(patch("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-patch-blank")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": " "
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-patch-blank"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
+                .andExpect(jsonPath("$.errors[0].field").value("name"));
+    }
+
+    @Test
+    void shouldReturn400WhenPatchDocumentIsInvalid() throws Exception {
+        mockMvc.perform(patch("/clients/{id}", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-patch-document")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "document": "123"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-patch-document"))
+                .andExpect(jsonPath("$.message").value("Erro de validação"))
+                .andExpect(jsonPath("$.errors[0].field").value("document"));
+    }
+
+    @Test
+    void shouldActivateClientSuccessfully() throws Exception {
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
+                .active(true)
+                .build();
+
+        when(clientService.activate(1L)).thenReturn(response);
+
+        mockMvc.perform(patch("/clients/{id}/activate", 1L)
+                        .header("X-User-Id", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.active").value(true));
+    }
+
+    @Test
+    void shouldReturn409WhenClientIsAlreadyActive() throws Exception {
+        when(clientService.activate(1L))
+                .thenThrow(new ConflictException("Cliente já está ativo"));
+
+        mockMvc.perform(patch("/clients/{id}/activate", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-active"))
+                .andExpect(status().isConflict())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-active"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Cliente já está ativo"));
+    }
+
+    @Test
+    void shouldDeactivateClientSuccessfully() throws Exception {
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
+                .active(false)
+                .build();
+
+        when(clientService.deactivate(1L)).thenReturn(response);
+
+        mockMvc.perform(patch("/clients/{id}/deactivate", 1L)
+                        .header("X-User-Id", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.active").value(false));
+    }
+
+    @Test
+    void shouldReturn409WhenClientIsAlreadyInactive() throws Exception {
+        when(clientService.deactivate(1L))
+                .thenThrow(new ConflictException("Cliente já está inativo"));
+
+        mockMvc.perform(patch("/clients/{id}/deactivate", 1L)
+                        .header("X-User-Id", "test-user")
+                        .header("X-Correlation-Id", "corr-client-inactive"))
+                .andExpect(status().isConflict())
+                .andExpect(header().string("X-Correlation-Id", "corr-client-inactive"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Cliente já está inativo"));
+    }
+
+    @Test
     void shouldFindClientByIdSuccessfully() throws Exception {
         ClientResponseDTO response = ClientResponseDTO.builder()
                 .id(1L)
@@ -192,7 +332,7 @@ class ClientControllerTest {
     @Test
     void shouldReturn404WhenClientNotFound() throws Exception {
         when(clientService.findById(99L))
-                .thenThrow(new ResourceNotFoundException("Cliente nao encontrado"));
+                .thenThrow(new ResourceNotFoundException("Cliente não encontrado"));
 
         mockMvc.perform(get("/clients/{id}", 99L)
                         .header("X-User-Id", "test-user")
@@ -201,7 +341,7 @@ class ClientControllerTest {
                 .andExpect(header().string("X-Correlation-Id", "corr-client-404"))
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Cliente nao encontrado"))
+                .andExpect(jsonPath("$.message").value("Cliente não encontrado"))
                 .andExpect(jsonPath("$.path").value("/clients/99"))
                 .andExpect(jsonPath("$.correlationId").value("corr-client-404"));
     }
@@ -270,22 +410,34 @@ class ClientControllerTest {
         when(clientService.findAll(
                 nullable(String.class),
                 nullable(String.class),
+                nullable(String.class),
+                nullable(Boolean.class),
                 any(Pageable.class)
         )).thenReturn(page);
 
         mockMvc.perform(get("/clients")
                         .header("X-User-Id", "test-user")
+                        .param("name", "Cliente")
+                        .param("email", "a@email.com")
+                        .param("document", "12345678900")
+                        .param("active", "true")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.totalElements").value(2));
+
+        verify(clientService).findAll(
+                eq("Cliente"),
+                eq("a@email.com"),
+                eq("12345678900"),
+                eq(true),
+                any(Pageable.class)
+        );
     }
 
     @Test
-    void shouldDeleteClientSuccessfully() throws Exception {
-        doNothing().when(clientService).delete(1L);
-
+    void shouldDeleteClientLogically() throws Exception {
         mockMvc.perform(delete("/clients/{id}", 1L)
                         .header("X-User-Id", "test-user"))
                 .andExpect(status().isNoContent());

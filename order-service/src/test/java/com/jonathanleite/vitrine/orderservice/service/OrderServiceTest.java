@@ -1,12 +1,14 @@
 package com.jonathanleite.vitrine.orderservice.service;
 
 import com.jonathanleite.vitrine.orderservice.client.ClientServiceClient;
+import com.jonathanleite.vitrine.orderservice.client.ClientServiceFallbackFactory;
 import com.jonathanleite.vitrine.orderservice.dto.ClientResponseDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderRequestDTO;
 import com.jonathanleite.vitrine.orderservice.dto.OrderResponseDTO;
 import com.jonathanleite.vitrine.orderservice.entity.Order;
 import com.jonathanleite.vitrine.orderservice.entity.OrderStatus;
 import com.jonathanleite.vitrine.orderservice.exception.BusinessException;
+import com.jonathanleite.vitrine.orderservice.exception.OrderStatusConflictException;
 import com.jonathanleite.vitrine.orderservice.exception.ResourceNotFoundException;
 import com.jonathanleite.vitrine.orderservice.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
@@ -14,11 +16,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -44,13 +48,19 @@ class OrderServiceTest {
         ClientResponseDTO client = new ClientResponseDTO(1L, "Jonathan", "jonathan@email.com", true);
 
         when(clientServiceClient.getClientById(1L, ClientServiceClient.SERVICE_USER_ID)).thenReturn(client);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order order = invocation.getArgument(0);
+            order.prePersist();
+            return order;
+        });
 
         OrderResponseDTO response = orderService.createOrder(request);
 
         assertEquals(1L, response.getClientId());
         assertEquals(OrderStatus.CREATED, response.getStatus());
         assertEquals(BigDecimal.TEN, response.getAmount());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
         verify(orderRepository).save(any(Order.class));
         verify(clientServiceClient).getClientById(1L, ClientServiceClient.SERVICE_USER_ID);
     }
@@ -91,6 +101,11 @@ class OrderServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> orderService.createOrder(request));
 
         assertEquals("CLIENT_SERVICE_UNAVAILABLE", exception.getErrorCode());
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatus());
+        assertEquals(
+                ClientServiceFallbackFactory.CLIENT_SERVICE_UNAVAILABLE_MESSAGE,
+                exception.getMessage()
+        );
         verify(orderRepository, never()).save(any(Order.class));
     }
 
@@ -115,13 +130,61 @@ class OrderServiceTest {
     @Test
     void shouldUpdateStatusFromCreatedToProcessing() {
         Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.CREATED);
+        order.prePersist();
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockSaveUpdatingTimestamp();
 
         OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.PROCESSING);
 
         assertEquals(OrderStatus.PROCESSING, response.getStatus());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
+    }
+
+    @Test
+    void shouldUpdateStatusFromProcessingToCompleted() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.PROCESSING);
+        order.prePersist();
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        mockSaveUpdatingTimestamp();
+
+        OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.COMPLETED);
+
+        assertEquals(OrderStatus.COMPLETED, response.getStatus());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
+    }
+
+    @Test
+    void shouldUpdateStatusFromCreatedToCancelled() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.CREATED);
+        order.prePersist();
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        mockSaveUpdatingTimestamp();
+
+        OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.CANCELLED);
+
+        assertEquals(OrderStatus.CANCELLED, response.getStatus());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
+    }
+
+    @Test
+    void shouldUpdateStatusFromProcessingToCancelled() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.PROCESSING);
+        order.prePersist();
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        mockSaveUpdatingTimestamp();
+
+        OrderResponseDTO response = orderService.updateStatus(10L, OrderStatus.CANCELLED);
+
+        assertEquals(OrderStatus.CANCELLED, response.getStatus());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(response.getUpdatedAt());
     }
 
     @Test
@@ -130,7 +193,12 @@ class OrderServiceTest {
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
-        assertThrows(BusinessException.class, () -> orderService.updateStatus(10L, OrderStatus.COMPLETED));
+        OrderStatusConflictException exception = assertThrows(
+                OrderStatusConflictException.class,
+                () -> orderService.updateStatus(10L, OrderStatus.COMPLETED)
+        );
+
+        assertEquals("Transição inválida de CREATED para COMPLETED", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
     }
 
@@ -140,7 +208,50 @@ class OrderServiceTest {
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
-        assertThrows(BusinessException.class, () -> orderService.updateStatus(10L, OrderStatus.PROCESSING));
+        OrderStatusConflictException exception = assertThrows(
+                OrderStatusConflictException.class,
+                () -> orderService.updateStatus(10L, OrderStatus.PROCESSING)
+        );
+
+        assertEquals("Pedido já finalizado não pode ser alterado", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldRejectStatusChangeWhenOrderIsCancelled() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.CANCELLED);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        OrderStatusConflictException exception = assertThrows(
+                OrderStatusConflictException.class,
+                () -> orderService.updateStatus(10L, OrderStatus.PROCESSING)
+        );
+
+        assertEquals("Pedido cancelado não pode ser alterado", exception.getMessage());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldRejectApplyingSameStatus() {
+        Order order = new Order(1L, "Compra teste", BigDecimal.TEN, OrderStatus.PROCESSING);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        OrderStatusConflictException exception = assertThrows(
+                OrderStatusConflictException.class,
+                () -> orderService.updateStatus(10L, OrderStatus.PROCESSING)
+        );
+
+        assertEquals("Pedido já está com esse status", exception.getMessage());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    private void mockSaveUpdatingTimestamp() {
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order savedOrder = invocation.getArgument(0);
+            savedOrder.preUpdate();
+            return savedOrder;
+        });
     }
 }

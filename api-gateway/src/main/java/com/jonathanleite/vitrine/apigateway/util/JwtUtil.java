@@ -1,8 +1,14 @@
 package com.jonathanleite.vitrine.apigateway.util;
 
+import com.jonathanleite.vitrine.apigateway.exception.JwtAuthenticationException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,8 +18,21 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class JwtUtil {
 
+    private static final int MIN_SECRET_LENGTH = 32;
+
     @Value("${jwt.secret}")
     private String secret;
+
+    @PostConstruct
+    void validateSecretConfiguration() {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET deve ser configurado por variavel de ambiente");
+        }
+
+        if (secret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_LENGTH) {
+            throw new IllegalStateException("JWT_SECRET deve possuir pelo menos 32 caracteres");
+        }
+    }
 
     public Claims validateToken(String token) {
 
@@ -24,8 +43,12 @@ public class JwtUtil {
                     .parseSignedClaims(token)
                     .getPayload();
 
-        } catch (Exception ex) {
-            throw new RuntimeException("Invalid or expired JWT token");
+        } catch (ExpiredJwtException ex) {
+            throw new JwtAuthenticationException("Token expirado");
+        } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException ex) {
+            throw new JwtAuthenticationException("Token malformado");
+        } catch (JwtException ex) {
+            throw new JwtAuthenticationException("Token invalido");
         }
     }
 

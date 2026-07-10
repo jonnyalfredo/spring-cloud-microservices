@@ -6,6 +6,7 @@ import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.entity.Client;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
+import com.jonathanleite.clientapi.domain.exception.ValidationException;
 import com.jonathanleite.clientapi.domain.repository.ClientRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -117,7 +118,7 @@ class ClientServiceImplTest {
     }
 
     /* ===============================
-       FIND ALL (FILTROS + PAGINAÇÃO)
+       FIND ALL (FILTERS + PAGINATION)
        =============================== */
 
     @Test
@@ -134,10 +135,67 @@ class ClientServiceImplTest {
                 .thenReturn(page);
 
         Page<ClientResponseDTO> result =
-                clientService.findAll(null, null, pageable);
+                clientService.findAll(null, null, null, null, pageable);
 
         assertEquals(2, result.getContent().size());
         assertEquals(2, result.getTotalElements());
+    }
+
+    @Test
+    void shouldThrowConflictWhenUpdateEmailBelongsToAnotherClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .email("atual@email.com")
+                .document("12345678900")
+                .build();
+
+        Client otherClient = Client.builder()
+                .id(2L)
+                .email("duplicado@email.com")
+                .build();
+
+        ClientRequestDTO request = ClientRequestDTO.builder()
+                .name("Jonathan")
+                .email("duplicado@email.com")
+                .document("12345678900")
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.findByEmail("duplicado@email.com")).thenReturn(Optional.of(otherClient));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.update(1L, request));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowConflictWhenUpdateDocumentBelongsToAnotherClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .email("atual@email.com")
+                .document("12345678900")
+                .build();
+
+        Client otherClient = Client.builder()
+                .id(2L)
+                .document("99999999999")
+                .build();
+
+        ClientRequestDTO request = ClientRequestDTO.builder()
+                .name("Jonathan")
+                .email("atual@email.com")
+                .document("99999999999")
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.findByEmail("atual@email.com")).thenReturn(Optional.empty());
+        when(clientRepository.findByDocument("99999999999")).thenReturn(Optional.of(otherClient));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.update(1L, request));
+
+        verify(clientRepository, never()).save(any(Client.class));
     }
 
     @Test
@@ -169,24 +227,201 @@ class ClientServiceImplTest {
         verify(clientRepository).save(client);
     }
 
+    @Test
+    void shouldThrowConflictWhenPatchEmailBelongsToAnotherClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .email("atual@email.com")
+                .document("12345678900")
+                .build();
+
+        Client otherClient = Client.builder()
+                .id(2L)
+                .email("duplicado@email.com")
+                .build();
+
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setEmail("duplicado@email.com");
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.findByEmail("duplicado@email.com")).thenReturn(Optional.of(otherClient));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowConflictWhenPatchDocumentBelongsToAnotherClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .email("atual@email.com")
+                .document("12345678900")
+                .build();
+
+        Client otherClient = Client.builder()
+                .id(2L)
+                .document("99999999999")
+                .build();
+
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setDocument("99999999999");
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.findByDocument("99999999999")).thenReturn(Optional.of(otherClient));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPatchNameIsBlank() {
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setName(" ");
+
+        assertThrows(ValidationException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).findById(any());
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPatchEmailIsInvalid() {
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setEmail("email-invalido");
+
+        assertThrows(ValidationException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).findById(any());
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPatchDocumentIsInvalid() {
+        ClientPatchRequestDTO request = new ClientPatchRequestDTO();
+        request.setDocument("123");
+
+        assertThrows(ValidationException.class,
+                () -> clientService.patch(1L, request));
+
+        verify(clientRepository, never()).findById(any());
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    /* ===============================
+       ACTIVATE / DEACTIVATE
+       =============================== */
+
+    @Test
+    void shouldActivateInactiveClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(false)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ClientResponseDTO response = clientService.activate(1L);
+
+        assertTrue(response.getActive());
+        verify(clientRepository).save(client);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenClientIsAlreadyActive() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(true)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.activate(1L));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    void shouldDeactivateActiveClient() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(true)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ClientResponseDTO response = clientService.deactivate(1L);
+
+        assertFalse(response.getActive());
+        verify(clientRepository).save(client);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenClientIsAlreadyInactive() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(false)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+
+        assertThrows(ConflictException.class,
+                () -> clientService.deactivate(1L));
+
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
     /* ===============================
        DELETE
        =============================== */
 
     @Test
-    void shouldDeleteClientSuccessfully() {
-        when(clientRepository.existsById(1L)).thenReturn(true);
+    void shouldDeleteClientLogically() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(true)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
 
         clientService.delete(1L);
 
-        verify(clientRepository).deleteById(1L);
+        assertFalse(client.getActive());
+        verify(clientRepository).save(client);
+        verify(clientRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void shouldKeepInactiveClientWhenDeletingAgain() {
+        Client client = Client.builder()
+                .id(1L)
+                .active(false)
+                .build();
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+
+        clientService.delete(1L);
+
+        assertFalse(client.getActive());
+        verify(clientRepository, never()).save(any(Client.class));
+        verify(clientRepository, never()).deleteById(any());
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingNonExistingClient() {
-        when(clientRepository.existsById(1L)).thenReturn(false);
+        when(clientRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> clientService.delete(1L));
+
+        verify(clientRepository, never()).deleteById(any());
     }
 }

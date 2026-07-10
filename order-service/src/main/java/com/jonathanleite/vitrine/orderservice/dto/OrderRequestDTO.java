@@ -1,16 +1,24 @@
 package com.jonathanleite.vitrine.orderservice.dto;
 
-import java.math.BigDecimal;
-import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+
+@Schema(description = "Dados necessários para criar um pedido")
 public class OrderRequestDTO {
 
+    @Schema(description = "Identificador do cliente que será vinculado ao pedido", example = "10", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "ClientId é obrigatório")
     private Long clientId;
 
+    @Schema(description = "Descrição do pedido", example = "Compra de notebook", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Descrição é obrigatória")
     private String description;
 
+    @Schema(description = "Valor total do pedido. Deve ser maior que zero", example = "3500.00", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Valor é obrigatório")
     @DecimalMin(value = "0.01", message = "O valor deve ser maior que zero")
     private BigDecimal amount;

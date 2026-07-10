@@ -195,6 +195,7 @@ Crie um `.env` a partir do `.env.example` antes de usar Docker Compose.
 | `JWT_SECRET` | Segredo usado pelo gateway para validar JWT |
 | `EUREKA_DEFAULT_ZONE` | URL do Eureka dentro do Docker |
 | `CLIENT_SERVICE_URL` | URL interna usada pelo order-service para consultar clientes |
+| `CORS_ALLOWED_ORIGINS` | Origins permitidas pelo CORS do client-service, separadas por virgula |
 
 Exemplo para Docker:
 
@@ -210,6 +211,7 @@ ORDER_DB_PASSWORD=change-me-order-password
 JWT_SECRET=change-me-to-a-long-random-secret-with-at-least-32-characters
 EUREKA_DEFAULT_ZONE=http://service-registry:8761/eureka
 CLIENT_SERVICE_URL=http://client-api:8081
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8080
 ```
 
 ## Endpoints principais

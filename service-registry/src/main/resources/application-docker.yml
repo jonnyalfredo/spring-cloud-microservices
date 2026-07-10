@@ -3,4 +3,9 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
   server:
+    # Docker development mirrors local behavior to make container restarts visible quickly.
     enable-self-preservation: false
+    eviction-interval-timer-in-ms: 10000
+  instance:
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30

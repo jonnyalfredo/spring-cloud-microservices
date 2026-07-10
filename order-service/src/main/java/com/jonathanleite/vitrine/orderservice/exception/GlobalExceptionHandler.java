@@ -50,6 +50,14 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(OrderStatusConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleOrderStatusConflict(
+            OrderStatusConflictException ex,
+            HttpServletRequest request) {
+
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiErrorResponse> handleConflict(
             ConflictException ex,
@@ -71,7 +79,7 @@ public class GlobalExceptionHandler {
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
-                "Erro de validacao",
+                "Erro de validação",
                 request,
                 fieldErrors
         );
@@ -84,7 +92,7 @@ public class GlobalExceptionHandler {
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
-                "Parametro obrigatorio ausente: " + ex.getParameterName(),
+                "Parâmetro obrigatório ausente: " + ex.getParameterName(),
                 request
         );
     }
@@ -94,7 +102,7 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Corpo da requisicao invalido", request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido", request);
     }
 
     @ExceptionHandler(Exception.class)

@@ -22,9 +22,13 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
                 .getHeaders()
                 .getFirst(CORRELATION_ID_HEADER);
 
-        if (correlationId == null) {
+        if (correlationId == null || correlationId.isBlank()) {
             correlationId = UUID.randomUUID().toString();
         }
+
+        exchange.getResponse()
+                .getHeaders()
+                .set(CORRELATION_ID_HEADER, correlationId);
 
         ServerHttpRequest mutatedRequest = exchange.getRequest()
                 .mutate()
@@ -36,6 +40,6 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -2;
+        return -3;
     }
 }

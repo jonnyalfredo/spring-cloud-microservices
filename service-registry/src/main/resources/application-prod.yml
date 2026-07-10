@@ -3,4 +3,9 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
   server:
+    # Production keeps Eureka self-preservation enabled to avoid removing healthy instances during network instability.
     enable-self-preservation: true
+    eviction-interval-timer-in-ms: 60000
+  instance:
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90

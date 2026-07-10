@@ -24,4 +24,36 @@ class ApiGatewayApplicationTests {
         assertThat(environment.getProperty("spring.cloud.gateway.routes[1].id"))
                 .isEqualTo("order-service");
     }
+
+    @Test
+    void shouldRouteBaseAndNestedApiPaths() {
+        assertThat(environment.getProperty("spring.cloud.gateway.routes[0].predicates[0]"))
+                .isEqualTo("Path=/api/v1/clients,/api/v1/clients/**");
+        assertThat(environment.getProperty("spring.cloud.gateway.routes[1].predicates[0]"))
+                .isEqualTo("Path=/api/v1/orders,/api/v1/orders/**");
+    }
+
+    @Test
+    void shouldExposeOnlyRequiredActuatorEndpoints() {
+        assertThat(environment.getProperty("management.endpoints.web.exposure.include"))
+                .isEqualTo("health,info,metrics,gateway");
+        assertThat(environment.getProperty("management.endpoint.health.show-details"))
+                .isEqualTo("never");
+        assertThat(environment.getProperty("management.endpoint.health.show-components"))
+                .isEqualTo("never");
+        assertThat(environment.getProperty("management.endpoint.health.probes.enabled"))
+                .isEqualTo("true");
+        assertThat(environment.getProperty("management.endpoint.gateway.enabled"))
+                .isEqualTo("true");
+    }
+
+    @Test
+    void shouldExposeServiceInformationOnInfoEndpoint() {
+        assertThat(environment.getProperty("management.info.env.enabled"))
+                .isEqualTo("true");
+        assertThat(environment.getProperty("info.app.name"))
+                .isEqualTo("api-gateway");
+        assertThat(environment.getProperty("info.app.version"))
+                .isEqualTo("0.0.1-SNAPSHOT");
+    }
 }

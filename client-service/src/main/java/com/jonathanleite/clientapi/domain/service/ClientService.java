@@ -14,9 +14,13 @@ public interface ClientService {
 
     ClientResponseDTO patch(Long id, ClientPatchRequestDTO request);
 
+    ClientResponseDTO activate(Long id);
+
+    ClientResponseDTO deactivate(Long id);
+
     ClientResponseDTO findById(Long id);
 
-    Page<ClientResponseDTO> findAll(String email, String document, Pageable pageable);
+    Page<ClientResponseDTO> findAll(String name, String email, String document, Boolean active, Pageable pageable);
 
     void delete(Long id);
 }

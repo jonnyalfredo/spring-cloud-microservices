@@ -1,6 +1,5 @@
 package com.jonathanleite.clientapi.api.exception;
 
-import com.jonathanleite.clientapi.domain.exception.BusinessException;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ForbiddenException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
@@ -33,7 +32,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
-    @ExceptionHandler({BusinessException.class, ValidationException.class})
+    @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ApiErrorResponse> handleBadRequest(
             RuntimeException ex,
             HttpServletRequest request) {
@@ -86,7 +85,7 @@ public class GlobalExceptionHandler {
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
-                "Erro de validacao",
+                "Erro de validação",
                 request,
                 fieldErrors
         );
@@ -99,7 +98,7 @@ public class GlobalExceptionHandler {
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
-                "Header obrigatorio ausente: " + ex.getHeaderName(),
+                "Header obrigatório ausente: " + ex.getHeaderName(),
                 request
         );
     }
@@ -109,7 +108,7 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException ex,
             HttpServletRequest request) {
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Corpo da requisicao invalido", request);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Corpo da requisição inválido", request);
     }
 
     @ExceptionHandler(RuntimeException.class)

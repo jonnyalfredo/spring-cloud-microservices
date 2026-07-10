@@ -40,6 +40,7 @@ class ClientServiceFallbackFactoryTest {
 
         assertEquals("CLIENT_SERVICE_UNAVAILABLE", exception.getErrorCode());
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatus());
+        assertEquals(ClientServiceFallbackFactory.CLIENT_SERVICE_UNAVAILABLE_MESSAGE, exception.getMessage());
     }
 
     private FeignException.NotFound notFoundException() {
