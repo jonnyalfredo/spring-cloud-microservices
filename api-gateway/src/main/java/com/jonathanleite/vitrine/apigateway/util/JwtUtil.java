@@ -1,7 +1,12 @@
 package com.jonathanleite.vitrine.apigateway.util;
 
+import com.jonathanleite.vitrine.apigateway.exception.JwtAuthenticationException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,8 +29,12 @@ public class JwtUtil {
                     .parseSignedClaims(token)
                     .getPayload();
 
-        } catch (Exception ex) {
-            throw new RuntimeException("Invalid or expired JWT token");
+        } catch (ExpiredJwtException ex) {
+            throw new JwtAuthenticationException("Token expirado");
+        } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException ex) {
+            throw new JwtAuthenticationException("Token malformado");
+        } catch (JwtException ex) {
+            throw new JwtAuthenticationException("Token invalido");
         }
     }
 
