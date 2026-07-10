@@ -26,12 +26,12 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         String path = exchange.getRequest().getURI().getPath();
 
-        // 🔓 Rotas públicas
+        // Public routes do not require a JWT.
         if (isPublicRoute(path)) {
             return chain.filter(exchange);
         }
 
-        // 🔐 Header Authorization
+        // Protected routes require Authorization: Bearer <token>.
         if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
             return onError(exchange, "Missing Authorization header", HttpStatus.UNAUTHORIZED);
         }
@@ -54,10 +54,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             return onError(exchange, "Invalid JWT token", HttpStatus.UNAUTHORIZED);
         }
 
-        // 🔥 Extrai usuário do token
         String username = jwtUtil.extractUsername(claims);
 
-        // 🔥 Propaga header para os microsserviços
         ServerHttpRequest mutatedRequest = exchange.getRequest()
                 .mutate()
                 .header("X-User-Id", username)

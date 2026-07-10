@@ -25,7 +25,7 @@ public class LoggingFilter implements GlobalFilter, Ordered {
                 ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
                 : "unknown";
 
-        log.info("➡️ Request: {} {} | IP: {}", method, path, ip);
+        log.info("Request: {} {} | IP: {}", method, path, ip);
 
         return chain.filter(exchange).then(Mono.fromRunnable(() -> {
 
@@ -35,7 +35,7 @@ public class LoggingFilter implements GlobalFilter, Ordered {
                     ? exchange.getResponse().getStatusCode().value()
                     : 0;
 
-            log.info("⬅️ Response: {} {} | Status: {} | Time: {} ms",
+            log.info("Response: {} {} | Status: {} | Time: {} ms",
                     method, path, status, duration);
         }));
     }
